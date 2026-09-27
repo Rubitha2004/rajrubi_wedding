@@ -1,0 +1,530 @@
+/* ==========================================================================
+   Modern Heritage RSVP Presentation & Interactive Modal System
+   Pixel-perfect match to lovesolutions.in/heritage design specification
+   ========================================================================== */
+
+/* 1. Page 6: In-Page Presentation Card */
+.wedding-rsvp-presentation-card {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 25 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 90% !important;
+  max-width: 540px !important;
+  pointer-events: auto !important;
+  padding: 10px 16px !important;
+  box-sizing: border-box !important;
+}
+
+.wedding-rsvp-eyebrow {
+  margin: 0 0 16px 0 !important;
+  font-family: 'Jost', 'Inter', -apple-system, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: rgb(88, 11, 26) !important;
+  opacity: 0.88 !important;
+}
+
+.wedding-rsvp-title {
+  margin: 0 0 22px 0 !important;
+  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-size: 58px !important;
+  font-weight: 400 !important;
+  line-height: 1.05 !important;
+  color: rgb(88, 11, 26) !important;
+  letter-spacing: -0.01em !important;
+}
+
+.wedding-rsvp-note {
+  margin: 0 auto 28px auto !important;
+  font-family: 'Jost', 'EB Garamond', Georgia, serif !important;
+  font-size: 16.5px !important;
+  line-height: 1.55 !important;
+  color: rgb(88, 11, 26) !important;
+  opacity: 0.92 !important;
+  max-width: 480px !important;
+  text-align: center !important;
+  text-wrap: balance !important;
+}
+
+/* Emerald Green Shimmering Action Button */
+.wedding-rsvp-action-btn {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 15px 36px !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #126343, #1e845d) !important;
+  box-shadow: 0 12px 30px rgba(22, 93, 59, 0.32), inset 0 1px rgba(255, 255, 255, 0.4) !important;
+  cursor: pointer !important;
+  font-family: 'Jost', 'Inter', -apple-system, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.wedding-rsvp-action-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 16px 36px rgba(22, 93, 59, 0.42), inset 0 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.wedding-rsvp-action-btn:active {
+  transform: translateY(0px) !important;
+}
+
+/* Button Shimmer Sweep Effect */
+.wedding-rsvp-action-btn::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -40% auto -40% -65% !important;
+  z-index: -1 !important;
+  width: 48% !important;
+  transform: skew(-22deg) !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 246, 205, 0.55), transparent) !important;
+  animation: weddingRsvpButtonShimmer 3.2s ease-in-out infinite !important;
+}
+
+@keyframes weddingRsvpButtonShimmer {
+
+  0%,
+  30% {
+    left: -65%;
+  }
+
+  68%,
+  100% {
+    left: 125%;
+  }
+}
+
+.wedding-rsvp-tap-label {
+  display: block !important;
+  margin-top: 14px !important;
+  font-family: 'Jost', 'Inter', -apple-system, sans-serif !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: rgb(88, 11, 26) !important;
+  opacity: 0.72 !important;
+}
+
+/* 2. Interactive Modal Backdrop Overlay */
+.wedding-rsvp-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: none !important;
+  place-items: center !important;
+  padding: 20px !important;
+  background: rgba(45, 10, 17, 0.72) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-sizing: border-box !important;
+  pointer-events: none !important;
+}
+
+.wedding-rsvp-modal.is-open {
+  display: grid !important;
+  pointer-events: auto !important;
+  animation: weddingRsvpModalFadeIn 0.28s ease-out both !important;
+}
+
+@keyframes weddingRsvpModalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Dialog Window */
+.wedding-rsvp-dialog {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 580px !important;
+  max-height: min(880px, calc(100dvh - 36px)) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 42px 46px !important;
+  border: 1px solid rgba(213, 168, 75, 0.65) !important;
+  border-radius: 24px !important;
+  background: #fff9ee !important;
+  box-shadow: 0 35px 100px rgba(35, 4, 12, 0.48) !important;
+  box-sizing: border-box !important;
+  font-family: 'Jost', 'Inter', -apple-system, sans-serif !important;
+  animation: weddingRsvpDialogIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+@keyframes weddingRsvpDialogIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+    filter: blur(6px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Close Circular Button */
+.wedding-rsvp-close-btn {
+  position: absolute !important;
+  top: 16px !important;
+  right: 18px !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background: rgba(106, 48, 56, 0.08) !important;
+  color: #6b3038 !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  transition: background 0.2s ease, transform 0.2s ease !important;
+}
+
+.wedding-rsvp-close-btn:hover {
+  background: rgba(106, 48, 56, 0.16) !important;
+  transform: scale(1.06) !important;
+}
+
+/* Modal Typography */
+.wedding-rsvp-dialog-eyebrow {
+  margin: 0 0 6px 0 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.25em !important;
+  text-transform: uppercase !important;
+  color: #b3813d !important;
+  font-weight: 600 !important;
+  font-family: 'Jost', sans-serif !important;
+  text-align: left !important;
+}
+
+.wedding-rsvp-dialog-title {
+  margin: 0 0 8px 0 !important;
+  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-size: 48px !important;
+  font-weight: 400 !important;
+  line-height: 1.05 !important;
+  color: #40161d !important;
+  text-align: left !important;
+}
+
+.wedding-rsvp-dialog-intro {
+  margin: 0 0 24px 0 !important;
+  font-family: 'EB Garamond', Georgia, serif !important;
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+  color: #765d57 !important;
+  text-align: left !important;
+}
+
+/* Form Styling */
+.wedding-rsvp-form {
+  display: grid !important;
+  gap: 16px !important;
+  text-align: left !important;
+}
+
+.wedding-rsvp-field {
+  display: grid !important;
+  gap: 6px !important;
+  text-align: left !important;
+}
+
+.wedding-rsvp-field span {
+  font-size: 11px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  color: #74545a !important;
+  font-family: 'Jost', sans-serif !important;
+}
+
+.wedding-rsvp-field input,
+.wedding-rsvp-field select,
+.wedding-rsvp-field textarea {
+  width: 100% !important;
+  border: 1px solid rgba(107, 48, 56, 0.25) !important;
+  border-radius: 10px !important;
+  padding: 13px 15px !important;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  color: #40161d !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.wedding-rsvp-field input:focus,
+.wedding-rsvp-field select:focus,
+.wedding-rsvp-field textarea:focus {
+  border-color: #b3813d !important;
+  box-shadow: 0 0 0 3px rgba(179, 129, 61, 0.18) !important;
+  background: #ffffff !important;
+}
+
+.wedding-rsvp-field textarea {
+  resize: vertical !important;
+  min-height: 72px !important;
+}
+
+.wedding-rsvp-form-row {
+  display: flex !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+.wedding-rsvp-field select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2374545a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  padding-right: 36px !important;
+  cursor: pointer !important;
+}
+
+/* Submit Pill Button */
+.wedding-rsvp-submit-btn {
+  height: 52px !important;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #5b1420 !important;
+  color: #ffffff !important;
+  font-family: 'Jost', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  cursor: pointer !important;
+  box-shadow: 0 10px 24px rgba(91, 20, 32, 0.28) !important;
+  margin-top: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s !important;
+}
+
+.wedding-rsvp-submit-btn:hover {
+  background: #4a0e18 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 28px rgba(91, 20, 32, 0.38) !important;
+}
+
+.wedding-rsvp-submit-btn:active {
+  transform: translateY(0px) !important;
+}
+
+/* 3. Post-Selection Confirmation View */
+.wedding-rsvp-confirm-badge {
+  width: 70px !important;
+  height: 70px !important;
+  border-radius: 50% !important;
+  background: #165d3b !important;
+  color: #ffffff !important;
+  font-size: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  margin: 6px auto 16px auto !important;
+  box-shadow: 0 8px 24px rgba(22, 93, 59, 0.3) !important;
+}
+
+.wedding-rsvp-confirm-title {
+  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-size: 42px !important;
+  font-weight: 400 !important;
+  color: #40161d !important;
+  margin: 0 0 10px 0 !important;
+  text-align: center !important;
+}
+
+.wedding-rsvp-confirm-desc {
+  font-family: 'EB Garamond', Georgia, serif !important;
+  font-size: 17px !important;
+  line-height: 1.5 !important;
+  color: #765d57 !important;
+  text-align: center !important;
+  margin: 0 auto 22px auto !important;
+  max-width: 440px !important;
+}
+
+.wedding-rsvp-summary-box {
+  border: 1px solid rgba(213, 168, 75, 0.45) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  padding: 18px 20px !important;
+  margin-bottom: 24px !important;
+  display: grid !important;
+  gap: 10px !important;
+  text-align: left !important;
+}
+
+.wedding-rsvp-summary-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 14px !important;
+}
+
+.wedding-rsvp-summary-row .label {
+  color: #74545a !important;
+  font-weight: 500 !important;
+}
+
+.wedding-rsvp-summary-row strong {
+  color: #40161d !important;
+  font-weight: 600 !important;
+}
+
+.wedding-rsvp-confirm-actions {
+  display: flex !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.wedding-rsvp-whatsapp-link-btn {
+  flex: 1 !important;
+  height: 48px !important;
+  border-radius: 999px !important;
+  background: #165d3b !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  font-family: 'Jost', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 0 8px 20px rgba(22, 93, 59, 0.25) !important;
+  transition: background 0.2s, transform 0.2s !important;
+}
+
+.wedding-rsvp-whatsapp-link-btn:hover {
+  background: #124d31 !important;
+  transform: translateY(-2px) !important;
+}
+
+.wedding-rsvp-done-btn {
+  padding: 0 28px !important;
+  height: 48px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(107, 48, 56, 0.3) !important;
+  background: transparent !important;
+  color: #40161d !important;
+  font-family: 'Jost', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 10 !important;
+  transition: background 0.2s !important;
+}
+
+.wedding-rsvp-done-btn:hover {
+  background: rgba(107, 48, 56, 0.08) !important;
+}
+
+/* 4. Responsive Breakpoints */
+@media (max-width: 768px) {
+  .wedding-rsvp-title {
+    font-size: 42px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .wedding-rsvp-note {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 22px !important;
+  }
+
+  .wedding-rsvp-action-btn {
+    padding: 13px 30px !important;
+    font-size: 14px !important;
+  }
+
+  .wedding-rsvp-dialog {
+    padding: 34px 26px 28px !important;
+    border-radius: 20px !important;
+  }
+
+  .wedding-rsvp-dialog-title {
+    font-size: 38px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .wedding-rsvp-title {
+    font-size: 34px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .wedding-rsvp-note {
+    font-size: 12.5px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 18px !important;
+    max-width: 310px !important;
+  }
+
+  .wedding-rsvp-action-btn {
+    padding: 12px 28px !important;
+    font-size: 13.5px !important;
+  }
+
+  .wedding-rsvp-dialog {
+    padding: 28px 18px 22px !important;
+    border-radius: 18px !important;
+    max-width: 94vw !important;
+  }
+
+  .wedding-rsvp-dialog-title {
+    font-size: 32px !important;
+  }
+
+  .wedding-rsvp-dialog-intro {
+    font-size: 15px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .wedding-rsvp-form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .wedding-rsvp-confirm-actions {
+    flex-direction: column !important;
+  }
+
+  .wedding-rsvp-done-btn {
+    width: 100% !important;
+  }
+}

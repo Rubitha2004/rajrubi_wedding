@@ -1,0 +1,84 @@
+{
+  "couple": {
+    "groom_name": "Rajkumar",
+    "bride_name": "Rubitha",
+    "title_format": "{groom} WEDS {bride}",
+    "tagline": "are getting married",
+    "connector": "WEDS",
+    "mantra": "॥ ஸ்ரீ முருகன் துணை ॥",
+    "deity_image": "./murugan_image.png",
+    "hashtag": "#RajkumarRubitha",
+    "instagram_handle": "@kaliyappan_rajkumar"
+  },
+  "groom_family": {
+    "father_name": "Kaliyappan",
+    "mother_name": "Susheela",
+    "grandfather_name": "Muthusamy Velaphagounder",
+    "grandmother_name": "Aarukani",
+    "blessing_lead": "With the blessings of the Almighty\nand our beloved elders,",
+    "connector": "and",
+    "invite_note": "we are cordially invite\nyou to grace the auspicious wedding ceremony of their beloved"
+  },
+  "bride_family": {
+    "father_name": "Duraisamy",
+    "mother_name": "Dhanalakshimi",
+    "grandfather_name": "Arunachalam",
+    "grandmother_name": "Papaathi",
+    "invite_note": ""
+  },
+  "invitation": {
+    "title": "Invite",
+    "blessing_lead": "With the blessings of God and our beloved parents,",
+    "blessing_subtitle": "we cordially",
+    "events_heading": "On the following events"
+  },
+  "events": [
+    {
+      "title": "Engagement Ceremony",
+      "date": "24 October 2026",
+      "time": "07:30 AM",
+      "venue": "Uthami Ponnusamy Thirumana Mandapam",
+      "description": "Join us as we exchange rings and begin our new journey together.",
+      "location_url": "https://maps.app.goo.gl/QpQ7s2R7rXf5f9T88"
+    },
+    {
+      "title": "Reception",
+      "date": "24 October 2026",
+      "time": "6:00 PM",
+      "venue": "Uthami Ponnusamy Thirumana Mandapam",
+      "description": "A night of celebration with family and friends.",
+      "location_url": "https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7"
+    },
+    {
+      "title": "Wedding Ceremony",
+      "date": "25 October 2026",
+      "time": "07:30 AM",
+      "venue": "Sivagiri Velayuthaswamy Temple",
+      "description": "",
+      "location_url": "https://maps.app.goo.gl/WvQtLPBUnHoazgyu8"
+    }
+  ],
+  "rsvp": {
+    "heading": "Will You Join Us?",
+    "button_text": "RSVP on WhatsApp",
+    "note": "We would be truly honoured to celebrate this day with you. Please let us know if you'll be joining the festivities — your presence is the only gift we need.",
+    "whatsapp_number": "+918825822508",
+    "whatsapp_message": "Hello! I would love to RSVP for the wedding of Rajkumar and Rubitha."
+  },
+  "countdown": {
+    "title": "Counting the Days",
+    "target_date": "2026-10-25T06:30:00+05:30"
+  },
+  "music": {
+    "title": "Insecurities",
+    "file": "./Insecurities.mp3",
+    "autoplay": false,
+    "delay_seconds": 2
+  },
+  "auto_scroll": {
+    "enabled": true,
+    "delay_seconds": 2,
+    "speed_pixels_per_second": 50,
+    "resume_delay_seconds": 3
+  }
+}

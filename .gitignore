@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Scratch and temporary testing artifacts
+scratch/
+.system_generated/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDE configuration
+.vscode/
+.idea/
