@@ -478,6 +478,7 @@
 
     // 11. Slow Cinematic Auto-Scroll (stops at Countdown Page)
     setupAutoScroll(config);
+    setupCinematicStageReveals(config);
     initializeTaglineFlowSync();
     scheduleTaglineFlowSync();
   }
@@ -1534,12 +1535,12 @@
       if (label) label.textContent = '🎵 ' + musicTitle;
     }
 
-    // 5. Autoplay only when enabled in config.
-    if (musicConfig.autoplay === true && !window.__weddingMusicAutoplayInitiated) {
+    // 5. Autoplay song after 2 seconds (or configured delay)
+    if (musicConfig.autoplay !== false && !window.__weddingMusicAutoplayInitiated) {
       window.__weddingMusicAutoplayInitiated = true;
       var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
 
-      setTimeout(function () {
+      var triggerMusicPlayback = function () {
         if (audio && audio.paused) {
           var p = audio.play();
           if (p !== undefined) {
@@ -1550,26 +1551,22 @@
               if (w) w.classList.add('is-playing');
             }).catch(function (err) {
               console.log('Autoplay deferred until first user interaction:', err ? err.message : '');
-              var triggerPendingPlay = function () {
-                if (audio && audio.paused) {
-                  audio.play().then(function () {
-                    var btn = document.getElementById('wedding-play-toggle');
-                    if (btn) btn.innerHTML = pauseSvg;
-                    var w = document.getElementById('wedding-music-widget');
-                    if (w) w.classList.add('is-playing');
-                  }).catch(function () { });
-                }
-                ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
-                  window.removeEventListener(ev, triggerPendingPlay);
-                });
-              };
-              ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
-                window.addEventListener(ev, triggerPendingPlay, { passive: true });
-              });
             });
           }
         }
-      }, autoPlayDelay);
+      };
+
+      setTimeout(triggerMusicPlayback, autoPlayDelay);
+
+      var gestureUnlock = function () {
+        triggerMusicPlayback();
+        ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+          window.removeEventListener(ev, gestureUnlock);
+        });
+      };
+      ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+        window.addEventListener(ev, gestureUnlock, { passive: true });
+      });
     }
   }
 
@@ -1592,22 +1589,35 @@
     var lastTime = null;
     var currentMultiplier = 1;
     var isLoopRunning = false;
+    var cachedTargetStop = null;
 
-    window.__weddingSetScrollSpeed = function (multiplier) {
-      currentMultiplier = multiplier;
-      userInteracting = false;
-      if (resumeTimer) clearTimeout(resumeTimer);
-
+    function getTargetStop() {
+      if (cachedTargetStop !== null) return cachedTargetStop;
       var docH = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
       var winH = window.innerHeight || 0;
       var maxScroll = Math.max(0, docH - winH);
       var countdownPage = document.querySelector('.framer-s1eh8d');
-      var targetStop = maxScroll;
       if (countdownPage) {
         var rect = countdownPage.getBoundingClientRect();
-        targetStop = Math.min(maxScroll, Math.max(0, rect.top + window.scrollY));
+        var currentY = window.scrollY || window.pageYOffset || 0;
+        cachedTargetStop = Math.min(maxScroll, Math.max(0, rect.top + currentY));
+      } else {
+        cachedTargetStop = maxScroll;
       }
+      return cachedTargetStop;
+    }
 
+    window.addEventListener('resize', function () {
+      cachedTargetStop = null;
+    }, { passive: true });
+
+    window.__weddingSetScrollSpeed = function (multiplier) {
+      currentMultiplier = multiplier;
+      userInteracting = false;
+      cachedTargetStop = null;
+      if (resumeTimer) clearTimeout(resumeTimer);
+
+      var targetStop = getTargetStop();
       if (window.scrollY < targetStop - 10) {
         autoScrollActive = true;
         if (!isLoopRunning) {
@@ -1655,20 +1665,7 @@
       if (dt > 0.2) dt = 0.016;
 
       if (!userInteracting) {
-        var docH = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
-        var winH = window.innerHeight || 0;
-        var maxScroll = Math.max(0, docH - winH);
-
-        // Target stop condition: Stop at Countdown & Locations Page (.framer-s1eh8d)
-        var countdownPage = document.querySelector('.framer-s1eh8d');
-        var targetStop = maxScroll;
-        if (countdownPage) {
-          var rect = countdownPage.getBoundingClientRect();
-          var currentY = window.scrollY || window.pageYOffset || 0;
-          var countdownTop = rect.top + currentY;
-          // Stop when Countdown & Locations page is in view
-          targetStop = Math.min(maxScroll, Math.max(0, countdownTop));
-        }
+        var targetStop = getTargetStop();
 
         if (targetStop > 10) {
           var effectiveSpeed = baseSpeed * currentMultiplier;
@@ -1701,6 +1698,119 @@
         requestAnimationFrame(step);
       }
     }, delaySec * 1000);
+  }
+
+  // 10. Individual Element Cinematic Entrance Scroll Reveals
+  function setupCinematicStageReveals(config) {
+    var targets = document.querySelectorAll(
+      '.wis-deity-wrap, .wis-invite-wrap, .wis-family-block, .wis-couple-wrap, .wis-events-badge, .wedding-venue-card'
+    );
+    if (!targets.length) return;
+
+    var revealCfg = (config && (config.cinematic_reveals || config.cinematic || config.appearance)) || {};
+    var isEnabled = revealCfg.enabled !== false;
+    var durationSec = (revealCfg.duration_seconds !== undefined) ? revealCfg.duration_seconds :
+                      ((revealCfg.slowness_seconds !== undefined) ? revealCfg.slowness_seconds : 1.6);
+    var delaySec = (revealCfg.delay_seconds !== undefined) ? revealCfg.delay_seconds :
+                   ((revealCfg.delay !== undefined) ? revealCfg.delay : 0.3);
+    var distPx = (revealCfg.distance_pixels !== undefined) ? revealCfg.distance_pixels :
+                 ((revealCfg.distance !== undefined) ? revealCfg.distance : 32);
+    var staggerSec = (revealCfg.stagger_seconds !== undefined) ? revealCfg.stagger_seconds : 0.12;
+
+    document.documentElement.style.setProperty('--wis-reveal-duration', durationSec + 's');
+    document.documentElement.style.setProperty('--wis-reveal-delay', delaySec + 's');
+    document.documentElement.style.setProperty('--wis-reveal-distance', distPx + 'px');
+    document.documentElement.style.setProperty('--wis-reveal-stagger', staggerSec + 's');
+
+    if (!isEnabled) {
+      document.body.classList.remove('has-cinematic-observer');
+      targets.forEach(function (el) {
+        el.classList.add('is-revealed', 'is-static');
+      });
+      return;
+    }
+
+    var stageItems = document.querySelectorAll('.wedding-invitation-stage > *');
+    stageItems.forEach(function (el, idx) {
+      el.style.setProperty('--item-index', idx);
+    });
+
+    document.body.classList.add('has-cinematic-observer');
+
+    if ('IntersectionObserver' in window) {
+      if (window.__weddingCinematicObserver) {
+        window.__weddingCinematicObserver.disconnect();
+      }
+
+      var hasScrolled = (window.scrollY || window.pageYOffset || 0) > 10;
+
+      function revealTarget(target) {
+        if (!target || target.classList.contains('is-revealed')) return;
+        target.classList.add('is-revealed');
+        if (window.__weddingCinematicObserver) {
+          window.__weddingCinematicObserver.unobserve(target);
+        }
+
+        // Lock in permanently as static once the entrance animation completes
+        var onEnd = function (e) {
+          if (e.target === target && (e.propertyName === 'transform' || e.propertyName === 'opacity')) {
+            target.removeEventListener('transitionend', onEnd);
+            target.classList.add('is-static');
+          }
+        };
+        target.addEventListener('transitionend', onEnd);
+        var maxWait = (durationSec + delaySec + (staggerSec * 5) + 0.5) * 1000;
+        setTimeout(function () {
+          target.classList.add('is-static');
+        }, maxWait);
+      }
+
+      var pendingEntries = [];
+
+      window.__weddingCinematicObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            if (hasScrolled) {
+              revealTarget(entry.target);
+            } else {
+              pendingEntries.push(entry.target);
+            }
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -30px 0px'
+      });
+
+      var onScrollActivity = function () {
+        hasScrolled = true;
+        window.removeEventListener('scroll', onScrollActivity);
+        window.removeEventListener('wheel', onScrollActivity);
+        window.removeEventListener('touchmove', onScrollActivity);
+        if (pendingEntries.length) {
+          pendingEntries.forEach(function (el) {
+            revealTarget(el);
+          });
+          pendingEntries = [];
+        }
+      };
+
+      if (!hasScrolled) {
+        window.addEventListener('scroll', onScrollActivity, { passive: true });
+        window.addEventListener('wheel', onScrollActivity, { passive: true });
+        window.addEventListener('touchmove', onScrollActivity, { passive: true });
+      }
+
+      targets.forEach(function (el) {
+        if (!el.classList.contains('is-revealed')) {
+          window.__weddingCinematicObserver.observe(el);
+        }
+      });
+    } else {
+      targets.forEach(function (el) {
+        el.classList.add('is-revealed', 'is-static');
+      });
+    }
   }
 
   function init() {

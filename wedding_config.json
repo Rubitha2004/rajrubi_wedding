@@ -72,13 +72,20 @@
   "music": {
     "title": "Insecurities",
     "file": "./Insecurities.mp3",
-    "autoplay": false,
+    "autoplay": true,
     "delay_seconds": 2
   },
   "auto_scroll": {
-    "enabled": false,
+    "enabled": true,
     "delay_seconds": 2,
     "speed_pixels_per_second": 50,
     "resume_delay_seconds": 3
+  },
+  "cinematic_reveals": {
+    "enabled": true,
+    "duration_seconds": 1.6,
+    "delay_seconds": 0.3,
+    "distance_pixels": 32,
+    "stagger_seconds": 0.12
   }
 }
