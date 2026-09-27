@@ -76,7 +76,7 @@
     "delay_seconds": 2
   },
   "auto_scroll": {
-    "enabled": true,
+    "enabled": false,
     "delay_seconds": 2,
     "speed_pixels_per_second": 50,
     "resume_delay_seconds": 3

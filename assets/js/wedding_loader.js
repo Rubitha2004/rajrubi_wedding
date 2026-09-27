@@ -10,6 +10,29 @@
     return format.replace('{bride}', bride).replace('{groom}', groom);
   }
 
+  function hasOwn(object, key) {
+    return Object.prototype.hasOwnProperty.call(object || {}, key);
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function textToHtml(value) {
+    return escapeHtml(value).replace(/\r?\n/g, '<br class="framer-text">');
+  }
+
+  function setTextContent(element, value) {
+    if (!element) return;
+    var text = String(value == null ? '' : value);
+    if (element.textContent !== text) element.textContent = text;
+  }
+
   function updateTaglineText(taglineEl, tagline) {
     var text = String(tagline || '').trim();
     var words = text ? text.split(/\s+/) : [];
@@ -20,7 +43,7 @@
       var characterIndex = 0;
       words.forEach(function (word) {
         Array.from(word).forEach(function (character) {
-          characterSpans[characterIndex].textContent = character;
+          setTextContent(characterSpans[characterIndex], character);
           characterIndex += 1;
         });
       });
@@ -94,27 +117,30 @@
     var couple = config.couple || {};
     var brideName = couple.bride_name || 'BRIDE';
     var groomName = couple.groom_name || 'GROOM';
+    var invitation = config.invitation || {};
+    var brideFamily = config.bride_family || {};
+    var groomFamily = config.groom_family || {};
 
     // 1. Page Title & Meta Tags
     var siteTitle = formatTitle(couple.title_format, brideName, groomName);
-    document.title = siteTitle;
+    if (document.title !== siteTitle) document.title = siteTitle;
     var ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.content = siteTitle;
+    if (ogTitle && ogTitle.content !== siteTitle) ogTitle.content = siteTitle;
     var twTitle = document.querySelector('meta[name="twitter:title"]');
-    if (twTitle) twTitle.content = siteTitle;
+    if (twTitle && twTitle.content !== siteTitle) twTitle.content = siteTitle;
 
     // 2. Page 1: Hero Names & Details
     document.querySelectorAll('[data-framer-name="BRIDE NAME"] p span').forEach(function (brideEl) {
-      brideEl.textContent = brideName;
+      setTextContent(brideEl, brideName);
     });
 
     document.querySelectorAll('[data-framer-name="GROOM NAME"] p span').forEach(function (groomEl) {
-      groomEl.textContent = groomName;
+      setTextContent(groomEl, groomName);
     });
 
     if (couple.connector) {
       document.querySelectorAll('[data-framer-name="WEDS"] p').forEach(function (connectorEl) {
-        connectorEl.textContent = couple.connector;
+        setTextContent(connectorEl, couple.connector);
       });
     }
 
@@ -124,12 +150,16 @@
     });
 
     // 3. Page 2: Invitation Details & Names
+    document.querySelectorAll('[data-framer-name="INVITE"] h1').forEach(function (titleEl) {
+      if (hasOwn(invitation, 'title')) setTextContent(titleEl, invitation.title);
+    });
+
     document.querySelectorAll('[data-framer-name="KIRAN"] h1').forEach(function (brideEl) {
-      brideEl.textContent = brideName;
+      setTextContent(brideEl, brideName);
     });
 
     document.querySelectorAll('[data-framer-name="GROOM NAME "] h1').forEach(function (groomEl) {
-      groomEl.textContent = groomName;
+      setTextContent(groomEl, groomName);
     });
 
     var mantraSvg = document.querySelector('.framer-101gh07');
@@ -138,7 +168,7 @@
     }
     var mantraEl = document.querySelector('.framer-101gh07 p');
     if (mantraEl) {
-      if (couple.mantra) mantraEl.textContent = couple.mantra;
+      if (couple.mantra) setTextContent(mantraEl, couple.mantra);
       mantraEl.style.setProperty('white-space', 'nowrap', 'important');
       mantraEl.style.setProperty('text-align', 'center', 'important');
     }
@@ -152,7 +182,7 @@
 
     var eventsHdr = document.querySelector('.framer-1jsww7o p');
     if (eventsHdr && config.invitation && config.invitation.events_heading) {
-      eventsHdr.textContent = config.invitation.events_heading;
+      setTextContent(eventsHdr, config.invitation.events_heading);
     }
 
     // Bride Family SVG - both desktop (.framer-1jawtcx) and mobile (.framer-19me4mh)
@@ -166,17 +196,70 @@
     });
 
     // Groom Family SVG (Unified Family Invitation) - both desktop (.framer-qq17fj) and mobile (.framer-o31tru)
-    var bFam = config.bride_family || {};
-    var bGf = bFam.grandfather_name || "Arunachalam";
-    var bGm = bFam.grandmother_name || "Papaathi";
-    var bF = bFam.father_name || "Duraisamy";
-    var bM = bFam.mother_name || "Dhanalakshimi";
+    var bGf = brideFamily.grandfather_name || "Arunachalam";
+    var bGm = brideFamily.grandmother_name || "Papaathi";
+    var bF = brideFamily.father_name || "Duraisamy";
+    var bM = brideFamily.mother_name || "Dhanalakshimi";
 
-    var gFam = config.groom_family || {};
-    var gGf = gFam.grandfather_name || "Muthusamy Velaphagounder";
-    var gGm = gFam.grandmother_name || "Aarukani";
-    var gF = gFam.father_name || "Kaliyappan";
-    var gM = gFam.mother_name || "Susheela";
+    var gGf = groomFamily.grandfather_name || "Muthusamy Velaphagounder";
+    var gGm = groomFamily.grandmother_name || "Aarukani";
+    var gF = groomFamily.father_name || "Kaliyappan";
+    var gM = groomFamily.mother_name || "Susheela";
+    var blessingLead = groomFamily.blessing_lead || "With the blessings of the Almighty\nand our beloved elders,";
+    var familyConnector = groomFamily.connector || "and";
+    var inviteNote = groomFamily.invite_note || "cordially invite you to grace the auspicious wedding ceremony of their beloved";
+    var blessingSubtitle = invitation.blessing_subtitle || "";
+    var brideInviteNote = brideFamily.invite_note || "Daughter of";
+
+    var invitationStage = document.getElementById('weddingInvitationStage');
+    var pageTwo = document.querySelector('.framer-gj6wzl');
+    if (!invitationStage && pageTwo) {
+      invitationStage = document.createElement('div');
+      invitationStage.className = 'wedding-invitation-stage';
+      invitationStage.id = 'weddingInvitationStage';
+      invitationStage.innerHTML =
+        '<div class="wis-deity-wrap"><img class="wis-deity-img" alt="Lord Murugan"><div class="wis-mantra" id="wisMantra"></div></div>' +
+        '<div class="wis-invite-wrap"><h1 class="wis-invite-title"></h1></div>' +
+        '<div class="wis-family-block" id="wisFamilyBlock"></div>' +
+        '<div class="wis-couple-wrap"><h2 class="wis-name wis-groom" id="wisGroomName"></h2><span class="wis-amp">&amp;</span><h2 class="wis-name wis-bride" id="wisBrideName"></h2></div>' +
+        '<div class="wis-events-badge" id="wisEventsBadge"><p></p></div>';
+      pageTwo.insertBefore(invitationStage, pageTwo.firstChild);
+    }
+    var stageImage = invitationStage && invitationStage.querySelector('.wis-deity-img');
+    if (stageImage) stageImage.src = couple.deity_image || './murugan_image.png';
+
+    var wisMantra = document.getElementById('wisMantra');
+    var wisInviteTitle = document.querySelector('.wis-invite-title');
+    var wisFamilyBlock = document.getElementById('wisFamilyBlock');
+    var wisGroomName = document.getElementById('wisGroomName');
+    var wisBrideName = document.getElementById('wisBrideName');
+    var wisEventsHeading = document.querySelector('.wis-events-badge p');
+    if (wisMantra) {
+      var mantraHtml = textToHtml(couple.mantra || "॥ ஸ்ரீ முருகன் துணை ॥");
+      if (wisMantra.innerHTML !== mantraHtml) wisMantra.innerHTML = mantraHtml;
+    }
+    if (wisInviteTitle && hasOwn(invitation, 'title')) setTextContent(wisInviteTitle, invitation.title);
+    if (wisGroomName) setTextContent(wisGroomName, groomName);
+    if (wisBrideName) setTextContent(wisBrideName, brideName);
+    if (wisEventsHeading && hasOwn(invitation, 'events_heading')) setTextContent(wisEventsHeading, invitation.events_heading);
+    document.querySelectorAll('[data-framer-name="INVITE TAG LINE"] p').forEach(function (taglineEl) {
+      if (hasOwn(invitation, 'blessing_lead')) {
+        setTextContent(taglineEl, invitation.blessing_lead + (blessingSubtitle ? '\n' + blessingSubtitle : ''));
+      }
+    });
+    if (wisFamilyBlock) {
+      var wisFamilySignature = [blessingLead, familyConnector, inviteNote, brideInviteNote, gF, gM, gGf, gGm, bF, bM, bGf, bGm, blessingSubtitle].join('\u0001');
+      if (wisFamilyBlock.getAttribute('data-family-signature') !== wisFamilySignature) {
+        wisFamilyBlock.innerHTML =
+        '<p class="wis-blessings">' + textToHtml(blessingLead) + '</p>' +
+        '<p class="wis-lineage wis-groom-lineage">Son of<br><strong class="wis-parents">' + escapeHtml(gF) + ' &amp; ' + escapeHtml(gM) + '</strong><br>and Grandson of<br><strong class="wis-grandparents">' + escapeHtml(gGf) + ' &amp; ' + escapeHtml(gGm) + '</strong></p>' +
+        (blessingSubtitle ? '<p class="wis-connector">' + textToHtml(blessingSubtitle) + '</p>' : '') +
+        '<p class="wis-connector">' + textToHtml(familyConnector) + '</p>' +
+        '<p class="wis-lineage wis-bride-lineage">' + textToHtml(brideInviteNote) + '<br><strong class="wis-parents">' + escapeHtml(bF) + ' &amp; ' + escapeHtml(bM) + '</strong><br>and Granddaughter of<br><strong class="wis-grandparents">' + escapeHtml(bGf) + ' &amp; ' + escapeHtml(bGm) + '</strong></p>' +
+        '<p class="wis-invite-text">' + textToHtml(inviteNote) + '</p>';
+        wisFamilyBlock.setAttribute('data-family-signature', wisFamilySignature);
+      }
+    }
 
     var groomFamSelectors = ['.framer-qq17fj', '.framer-o31tru'];
     groomFamSelectors.forEach(function (sel) {
@@ -194,15 +277,18 @@
           }
         }
         var target = fo || el;
-        var unifiedHtml = '<p dir="auto" class="framer-text">With the blessings of the Almighty<br class="framer-text">and our beloved elders,</p>' +
-          '<p dir="auto" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">' + gF + ' &amp; ' + gM + '</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">' + gGf + ' &amp; ' + gGm + '</strong></p>' +
-          '<p dir="auto" class="framer-text">and</p>' +
-          '<p dir="auto" class="framer-text">Daughter of<br class="framer-text"><strong class="framer-text">' + bF + ' &amp; ' + bM + '</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">' + bGf + ' &amp; ' + bGm + '</strong></p>' +
-          '<p dir="auto" class="framer-text">cordially invite you to grace the auspicious wedding ceremony of their beloved</p>';
+        var unifiedHtml = '<p dir="auto" class="framer-text">' + textToHtml(blessingLead) + '</p>' +
+          '<p dir="auto" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">' + escapeHtml(gF) + ' &amp; ' + escapeHtml(gM) + '</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">' + escapeHtml(gGf) + ' &amp; ' + escapeHtml(gGm) + '</strong></p>' +
+          (blessingSubtitle ? '<p dir="auto" class="framer-text">' + textToHtml(blessingSubtitle) + '</p>' : '') +
+          '<p dir="auto" class="framer-text">' + textToHtml(familyConnector) + '</p>' +
+          '<p dir="auto" class="framer-text">' + textToHtml(brideInviteNote) + '<br class="framer-text"><strong class="framer-text">' + escapeHtml(bF) + ' &amp; ' + escapeHtml(bM) + '</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">' + escapeHtml(bGf) + ' &amp; ' + escapeHtml(bGm) + '</strong></p>' +
+          '<p dir="auto" class="framer-text">' + textToHtml(inviteNote) + '</p>';
 
-        if (!target.getAttribute('data-unified-family') || target.innerHTML.indexOf(bF) === -1 || target.innerHTML.indexOf(gGf) === -1) {
+        var familySignature = [blessingLead, familyConnector, inviteNote, brideInviteNote, gF, gM, gGf, gGm, bF, bM, bGf, bGm, blessingSubtitle].join('\u0001');
+        if (target.getAttribute('data-family-signature') !== familySignature) {
           target.innerHTML = unifiedHtml;
           target.setAttribute('data-unified-family', 'true');
+          target.setAttribute('data-family-signature', familySignature);
         }
       }
     });
@@ -218,21 +304,21 @@
       if (!eventsList.length) return;
       var ev = eventsList[idx % eventsList.length];
       var eventH2 = document.querySelector('.wedding-fade-up h2');
-      if (eventH2 && ev.title) eventH2.textContent = ev.title;
+      if (eventH2 && ev.title) setTextContent(eventH2, ev.title);
 
       var eventSpans = document.querySelectorAll('.wedding-fade-up div div span:last-child');
       if (eventSpans.length >= 3) {
-        if (ev.date) eventSpans[0].textContent = ev.date;
-        if (ev.time) eventSpans[1].textContent = ev.time;
-        if (ev.venue) eventSpans[2].textContent = ev.venue;
+        if (hasOwn(ev, 'date')) setTextContent(eventSpans[0], ev.date || '');
+        if (hasOwn(ev, 'time')) setTextContent(eventSpans[1], ev.time || '');
+        if (hasOwn(ev, 'venue')) setTextContent(eventSpans[2], ev.venue || '');
       }
 
       var eventDesc = document.querySelector('.wedding-fade-up > p');
-      if (eventDesc && ev.description) eventDesc.textContent = ev.description;
+      if (eventDesc && hasOwn(ev, 'description')) setTextContent(eventDesc, ev.description || '');
 
       var ctaBtn = document.querySelector('.wedding-cta-btn');
-      if (ctaBtn && ev.location_url) {
-        ctaBtn.href = ev.location_url;
+      if (ctaBtn && hasOwn(ev, 'location_url')) {
+        ctaBtn.href = ev.location_url || '#';
         ctaBtn.target = '_blank';
       }
 
@@ -276,7 +362,10 @@
     // Setup dots
     var dots = document.querySelectorAll('.wedding-dot-btn');
     dots.forEach(function (dot, dIdx) {
-      if (!dot.dataset.wired) {
+      dot.hidden = dIdx >= eventsList.length;
+    });
+    dots.forEach(function (dot, dIdx) {
+      if (!dot.hidden && !dot.dataset.wired) {
         dot.dataset.wired = 'true';
         dot.onclick = function (e) {
           e.preventDefault();
@@ -291,8 +380,14 @@
 
     // 6. Page 6: RSVP
     if (config.rsvp) {
+      var rsvpHeading = document.querySelector('.wedding-rsvp-title');
+      if (rsvpHeading && hasOwn(config.rsvp, 'heading')) setTextContent(rsvpHeading, config.rsvp.heading);
+      var rsvpButton = document.querySelector('.wedding-rsvp-action-btn span');
+      if (rsvpButton && hasOwn(config.rsvp, 'button_text')) setTextContent(rsvpButton, config.rsvp.button_text);
       var rsvpNote = document.querySelector('[data-framer-name="RSVP Note"] p');
-      if (rsvpNote && config.rsvp.note) rsvpNote.textContent = config.rsvp.note;
+      if (rsvpNote && hasOwn(config.rsvp, 'note')) setTextContent(rsvpNote, config.rsvp.note || '');
+      var rsvpPresentationNote = document.querySelector('.wedding-rsvp-note');
+      if (rsvpPresentationNote && hasOwn(config.rsvp, 'note')) setTextContent(rsvpPresentationNote, config.rsvp.note || '');
 
       setupRSVP(config, siteTitle);
     }
@@ -300,11 +395,11 @@
     // 7. Page 7: Hashtag, Handle & Live Countdown
     if (couple.hashtag) {
       var hashP = document.querySelector('[data-framer-name="#"] p');
-      if (hashP) hashP.textContent = couple.hashtag;
+      if (hashP) setTextContent(hashP, couple.hashtag);
     }
     if (couple.instagram_handle) {
       var handleP = document.querySelector('[data-framer-name="THE ARTFUL INVITES"] p');
-      if (handleP) handleP.textContent = couple.instagram_handle;
+      if (handleP) setTextContent(handleP, couple.instagram_handle);
     }
 
     // Helper to parse dates robustly across all browser engines
@@ -349,12 +444,15 @@
           var spans = timerContainer.querySelectorAll('span');
           // spans layout: [0]=Days, [1]='D', [2]=':', [3]=Hours, [4]='H', [5]=':', [6]=Minutes, [7]='M', [8]=':', [9]=Seconds, [10]='S'
           if (spans.length >= 10) {
-            spans[0].textContent = String(days).padStart(2, '0');
-            spans[3].textContent = String(hours).padStart(2, '0');
-            spans[6].textContent = String(minutes).padStart(2, '0');
-            spans[9].textContent = String(seconds).padStart(2, '0');
+            setTextContent(spans[0], String(days).padStart(2, '0'));
+            setTextContent(spans[3], String(hours).padStart(2, '0'));
+            setTextContent(spans[6], String(minutes).padStart(2, '0'));
+            setTextContent(spans[9], String(seconds).padStart(2, '0'));
           }
         }
+        document.querySelectorAll('[data-framer-name="COUNTING THE DAYS"] p').forEach(function (titleEl) {
+          if (config.countdown && hasOwn(config.countdown, 'title')) setTextContent(titleEl, config.countdown.title);
+        });
       }
 
       updateCountdown();
@@ -402,6 +500,11 @@
       var confirmView = document.getElementById('weddingRSVPConfirmationView');
       if (formView) formView.style.display = 'block';
       if (confirmView) confirmView.style.display = 'none';
+      var configuredMessage = rsvpConfig.whatsapp_message;
+      var messageInput = document.getElementById('rsvpMessage');
+      if (messageInput && configuredMessage && !messageInput.value) {
+        messageInput.value = configuredMessage;
+      }
       document.body.style.overflow = 'hidden';
       setTimeout(function () {
         var nameInput = document.getElementById('rsvpGuestName');
@@ -632,32 +735,32 @@
     var html = '\
       <div class="wedding-venue-card wedding-card">\
         <div class="wedding-venue-badge">Wedding Ceremony</div>\
-        <div class="wedding-venue-title">' + (weddingEv.venue || 'Sivagiri Velayuthaswamy Temple') + '</div>\
+        <div class="wedding-venue-title">' + escapeHtml(weddingEv.venue || 'Sivagiri Velayuthaswamy Temple') + '</div>\
         <div class="wedding-venue-row datetime">\
           <span class="wedding-venue-icon">📅</span>\
-          <span>' + (weddingEv.date || '25 October 2026') + (weddingEv.time ? (' • ' + weddingEv.time) : '') + '</span>\
+          <span>' + escapeHtml(weddingEv.date || '25 October 2026') + (weddingEv.time ? (' • ' + escapeHtml(weddingEv.time)) : '') + '</span>\
         </div>\
         <div class="wedding-venue-row place">\
           <span class="wedding-venue-icon">📍</span>\
-          <span>' + (weddingEv.venue || 'Sivagiri Velayuthaswamy Temple') + '</span>\
+          <span>' + escapeHtml(weddingEv.venue || 'Sivagiri Velayuthaswamy Temple') + '</span>\
         </div>\
-        <a href="' + (weddingEv.location_url || 'https://maps.app.goo.gl/WvQtLPBUnHoazgyu8') + '" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">\
+        <a href="' + escapeHtml(weddingEv.location_url || 'https://maps.app.goo.gl/WvQtLPBUnHoazgyu8') + '" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">\
           ' + mapSvg + '\
           <span>View on Google Maps</span>\
         </a>\
       </div>\
       <div class="wedding-venue-card reception-card">\
         <div class="wedding-venue-badge">Reception</div>\
-        <div class="wedding-venue-title">' + (receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam') + '</div>\
+        <div class="wedding-venue-title">' + escapeHtml(receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam') + '</div>\
         <div class="wedding-venue-row datetime">\
           <span class="wedding-venue-icon">📅</span>\
-          <span>' + (receptionEv.date || '24 October 2026') + (receptionEv.time ? (' • ' + receptionEv.time) : '') + '</span>\
+          <span>' + escapeHtml(receptionEv.date || '24 October 2026') + (receptionEv.time ? (' • ' + escapeHtml(receptionEv.time)) : '') + '</span>\
         </div>\
         <div class="wedding-venue-row place">\
           <span class="wedding-venue-icon">📍</span>\
-          <span>' + (receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam') + '</span>\
+          <span>' + escapeHtml(receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam') + '</span>\
         </div>\
-        <a href="' + (receptionEv.location_url || 'https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7') + '" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">\
+        <a href="' + escapeHtml(receptionEv.location_url || 'https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7') + '" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">\
           ' + mapSvg + '\
           <span>View on Google Maps</span>\
         </a>\
@@ -1274,7 +1377,7 @@
         </button>\
         <div id="wedding-widget-body">\
           <div id="wedding-music-info" title="Toggle Play / Pause">\
-            <span id="wedding-music-label" style="font-size:13px;font-weight:600;color:rgb(88,11,26);letter-spacing:0.01em;white-space:nowrap;">🎵 ' + musicTitle + '</span>\
+            <span id="wedding-music-label" style="font-size:13px;font-weight:600;color:rgb(88,11,26);letter-spacing:0.01em;white-space:nowrap;">🎵 ' + escapeHtml(musicTitle) + '</span>\
             <div id="wedding-music-bars">\
               <span class="eq-bar b1"></span>\
               <span class="eq-bar b2"></span>\
@@ -1431,8 +1534,8 @@
       if (label) label.textContent = '🎵 ' + musicTitle;
     }
 
-    // 5. Autoplay song after 2 seconds (or configured delay)
-    if (!window.__weddingMusicAutoplayInitiated) {
+    // 5. Autoplay only when enabled in config.
+    if (musicConfig.autoplay === true && !window.__weddingMusicAutoplayInitiated) {
       window.__weddingMusicAutoplayInitiated = true;
       var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
 

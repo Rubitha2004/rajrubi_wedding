@@ -53,6 +53,10 @@ Choose either:
   python3 update_wedding.py
   ```
 
+The updater regenerates `wedding_config.js` from `wedding_config.json` and refreshes the page's runtime config loader. Refresh the browser after changing config values.
+
+The invitation page uses one stable central content frame for phone, tablet, and desktop widths. The background keeps its portrait frame ratio, while the deity image, invitation text, couple names, and event heading stay inside the central frame during window resizing.
+
 ---
 
 ## Built-In Features

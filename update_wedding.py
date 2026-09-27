@@ -3,6 +3,17 @@ import json
 import re
 import os
 import sys
+from html import escape as html_escape
+
+
+def html_text(value):
+    return html_escape(str(value or ""), quote=False).replace("\r\n", "<br>").replace("\n", "<br>")
+
+
+def group_replacement(value, attribute=False):
+    encoded = html_escape(str(value or ""), quote=attribute)
+    return lambda match: match.group(1) + encoded + match.group(2)
+
 
 def update_html_file(html_path, config):
     if not os.path.exists(html_path):
@@ -52,6 +63,10 @@ def update_html_file(html_path, config):
 
     rsvp = config.get("rsvp", {})
     rsvp_note = rsvp.get("note", "")
+    invitation = config.get("invitation", {})
+    invitation_title = invitation.get("title", "Invite")
+    events_heading = invitation.get("events_heading", "On the following events")
+    blessing_subtitle = invitation.get("blessing_subtitle", "")
 
     # Heritage Template Handler
     if "heritage.css" in html:
@@ -73,26 +88,26 @@ def update_html_file(html_path, config):
 
     # Static HTML replacements
     # Title & meta
-    html = re.sub(r'<title>[^<]*</title>', f'<title>{site_title}</title>', html, flags=re.I)
-    html = re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{site_title}">', html, flags=re.I)
-    html = re.sub(r'<meta name="twitter:title" content="[^"]*">', f'<meta name="twitter:title" content="{site_title}">', html, flags=re.I)
+    html = re.sub(r'<title>[^<]*</title>', lambda _: f'<title>{html_text(site_title)}</title>', html, flags=re.I)
+    html = re.sub(r'<meta property="og:title" content="[^"]*">', lambda _: f'<meta property="og:title" content="{html_escape(site_title, quote=True)}">', html, flags=re.I)
+    html = re.sub(r'<meta name="twitter:title" content="[^"]*">', lambda _: f'<meta name="twitter:title" content="{html_escape(site_title, quote=True)}">', html, flags=re.I)
 
     # Page 1: Hero Bride & Groom
     html = re.sub(
         r'(data-framer-name="BRIDE NAME"[^>]*><p[^>]*><span[^>]*>)[^<]*(</span>)',
-        r'\g<1>' + bride + r'\g<2>',
+        group_replacement(bride),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(data-framer-name="GROOM NAME"[^>]*><p[^>]*><span[^>]*>)[^<]*(</span>)',
-        r'\g<1>' + groom + r'\g<2>',
+        group_replacement(groom),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(data-framer-name="WEDS"[^>]*><foreignobject[^>]*><p[^>]*class="framer-text">)[^<]*(</p>)',
-        r'\g<1>' + connector + r'\g<2>',
+        group_replacement(connector),
         html,
         flags=re.I
     )
@@ -100,13 +115,13 @@ def update_html_file(html_path, config):
     # Page 2: Names
     html = re.sub(
         r'(data-framer-name="KIRAN"[^>]*><h1[^>]*class="framer-text">)[^<]*(</h1>)',
-        r'\g<1>' + bride + r'\g<2>',
+        group_replacement(bride),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(data-framer-name="GROOM NAME "[^>]*><h1[^>]*class="framer-text">)[^<]*(</h1>)',
-        r'\g<1>' + groom + r'\g<2>',
+        group_replacement(groom),
         html,
         flags=re.I
     )
@@ -130,7 +145,7 @@ def update_html_file(html_path, config):
     )
     html = re.sub(
         r'(class="framer-101gh07"[^>]*><foreignobject[^>]*><p[^>]*class="framer-text">)[^<]*(</p>)',
-        r'\g<1>' + mantra + r'\g<2>',
+        group_replacement(mantra),
         html,
         flags=re.I
     )
@@ -145,11 +160,11 @@ def update_html_file(html_path, config):
     groom_fam_pattern = r"(<svg[^>]*class=\"[^\"]*framer-qq17fj[^\"]*\"[^>]*>\s*<foreignObject[^>]*>).*?(</foreignObject>)"
     groom_fam_replacement = (
         r"\g<1>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">With the blessings of the Almighty<br class=\"framer-text\">and our beloved elders,</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_blessing)}</p>"
         f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">Son of<br class=\"framer-text\"><strong class=\"framer-text\">{g_f} &amp; {g_m}</strong><br class=\"framer-text\">and Grandson of<br class=\"framer-text\"><strong class=\"framer-text\">{g_gf} &amp; {g_gm}</strong></p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:15px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">and</p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">Daughter of<br class=\"framer-text\"><strong class=\"framer-text\">{b_f} &amp; {b_m}</strong><br class=\"framer-text\">and Granddaughter of<br class=\"framer-text\"><strong class=\"framer-text\">{b_gf} &amp; {b_gm}</strong></p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">cordially invite you to grace the auspicious wedding ceremony of their beloved</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:15px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_conn)}</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(b_note or 'Daughter of')}<br class=\"framer-text\"><strong class=\"framer-text\">{html_text(b_f)} &amp; {html_text(b_m)}</strong><br class=\"framer-text\">and Granddaughter of<br class=\"framer-text\"><strong class=\"framer-text\">{html_text(b_gf)} &amp; {html_text(b_gm)}</strong></p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_note)}</p>"
         r"\g<2>"
     )
     html = re.sub(groom_fam_pattern, groom_fam_replacement, html, flags=re.DOTALL | re.I)
@@ -164,11 +179,11 @@ def update_html_file(html_path, config):
     mobile_groom_fam_pattern = r"(<svg[^>]*class=\"[^\"]*framer-o31tru[^\"]*\"[^>]*>\s*<foreignObject[^>]*>).*?(</foreignObject>)"
     mobile_groom_fam_replacement = (
         r"\g<1>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">With the blessings of the Almighty<br class=\"framer-text\">and our beloved elders,</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_blessing)}</p>"
         f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">Son of<br class=\"framer-text\"><strong class=\"framer-text\">{g_f} &amp; {g_m}</strong><br class=\"framer-text\">and Grandson of<br class=\"framer-text\"><strong class=\"framer-text\">{g_gf} &amp; {g_gm}</strong></p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">and</p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">Daughter of<br class=\"framer-text\"><strong class=\"framer-text\">{b_f} &amp; {b_m}</strong><br class=\"framer-text\">and Granddaughter of<br class=\"framer-text\"><strong class=\"framer-text\">{b_gf} &amp; {b_gm}</strong></p>"
-        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">cordially invite you to grace the auspicious wedding ceremony of their beloved</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_conn)}</p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(b_note or 'Daughter of')}<br class=\"framer-text\"><strong class=\"framer-text\">{html_text(b_f)} &amp; {html_text(b_m)}</strong><br class=\"framer-text\">and Granddaughter of<br class=\"framer-text\"><strong class=\"framer-text\">{html_text(b_gf)} &amp; {html_text(b_gm)}</strong></p>"
+        f"<p dir=\"auto\" style=\"--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)\" class=\"framer-text\">{html_text(g_note)}</p>"
         r"\g<2>"
     )
     html = re.sub(mobile_groom_fam_pattern, mobile_groom_fam_replacement, html, flags=re.DOTALL | re.I)
@@ -177,36 +192,37 @@ def update_html_file(html_path, config):
     wis_stage_html = f'''<!-- UNIFIED RESPONSIVE INVITATION STAGE -->
             <div class="wedding-invitation-stage" id="weddingInvitationStage">
               <div class="wis-deity-wrap">
-                <img class="wis-deity-img" src="{deity_img_src}" alt="Lord Murugan" />
-                <div class="wis-mantra" id="wisMantra">{mantra}</div>
+                <img class="wis-deity-img" src="{html_escape(str(deity_img_src), quote=True)}" alt="Lord Murugan" />
+                <div class="wis-mantra" id="wisMantra">{html_text(mantra)}</div>
               </div>
               <div class="wis-invite-wrap">
-                <h1 class="wis-invite-title">Invite</h1>
+                <h1 class="wis-invite-title">{html_text(invitation_title)}</h1>
               </div>
               <div class="wis-family-block" id="wisFamilyBlock">
-                <p class="wis-blessings">With the blessings of the Almighty<br>and our beloved elders,</p>
+                <p class="wis-blessings">{html_text(g_blessing)}</p>
                 <p class="wis-lineage wis-groom-lineage">
                   Son of<br>
-                  <strong class="wis-parents">{g_f} &amp; {g_m}</strong><br>
+                  <strong class="wis-parents">{html_text(g_f)} &amp; {html_text(g_m)}</strong><br>
                   and Grandson of<br>
-                  <strong class="wis-grandparents">{g_gf} &amp; {g_gm}</strong>
+                  <strong class="wis-grandparents">{html_text(g_gf)} &amp; {html_text(g_gm)}</strong>
                 </p>
-                <p class="wis-connector">and</p>
+                {f'<p class="wis-connector">{html_text(blessing_subtitle)}</p>' if blessing_subtitle else ''}
+                <p class="wis-connector">{html_text(g_conn)}</p>
                 <p class="wis-lineage wis-bride-lineage">
-                  Daughter of<br>
-                  <strong class="wis-parents">{b_f} &amp; {b_m}</strong><br>
+                  {html_text(b_note or "Daughter of")}<br>
+                  <strong class="wis-parents">{html_text(b_f)} &amp; {html_text(b_m)}</strong><br>
                   and Granddaughter of<br>
-                  <strong class="wis-grandparents">{b_gf} &amp; {b_gm}</strong>
+                  <strong class="wis-grandparents">{html_text(b_gf)} &amp; {html_text(b_gm)}</strong>
                 </p>
-                <p class="wis-invite-text">cordially invite you to grace the auspicious wedding ceremony of their beloved</p>
+                <p class="wis-invite-text">{html_text(g_note)}</p>
               </div>
               <div class="wis-couple-wrap">
-                <h2 class="wis-name wis-groom" id="wisGroomName">{groom}</h2>
+                <h2 class="wis-name wis-groom" id="wisGroomName">{html_text(groom)}</h2>
                 <span class="wis-amp">&amp;</span>
-                <h2 class="wis-name wis-bride" id="wisBrideName">{bride}</h2>
+                <h2 class="wis-name wis-bride" id="wisBrideName">{html_text(bride)}</h2>
               </div>
               <div class="wis-events-badge" id="wisEventsBadge">
-                <p>On the following events</p>
+                <p>{html_text(events_heading)}</p>
               </div>
             </div>'''
 
@@ -221,50 +237,58 @@ def update_html_file(html_path, config):
             html = html[:idx] + wis_stage_html + '\n            ' + html[idx:]
 
     # Hide redundant bottom bride family SVGs
-    html = re.sub(r"(<svg[^>]*class=\"[^\"]*framer-1jawtcx[^\"]*\"[^>]*style=\")", r"\g<1>display:none !important;", html, flags=re.I)
-    html = re.sub(r"(<svg[^>]*class=\"[^\"]*framer-19me4mh[^\"]*\"[^>]*style=\")", r"\g<1>display:none !important;", html, flags=re.I)
+    def hide_family_svg(match):
+        style = re.sub(r"(?:display:none\s*!important;)+", "", match.group(2), flags=re.I)
+        return match.group(1) + "display:none !important;" + style + match.group(3)
+
+    html = re.sub(
+        r'(<svg[^>]*class="[^"]*framer-(?:1jawtcx|19me4mh)[^"]*"[^>]*style=")(.*?)(")',
+        hide_family_svg,
+        html,
+        flags=re.I | re.DOTALL
+    )
 
     # Page 3: Event Slideshow
     html = re.sub(
         r'(<span style="color:rgb\(7, 95, 203\);opacity:0\.9;font-size:15px;line-height:1\.35em;letter-spacing:0em;font-family:&quot;Jost-Medium&quot;, sans-serif">)[^<]*(</span>)',
-        r'\g<1>' + f"{groom} &amp; {bride}" + r'\g<2>',
+        group_replacement(f"{groom} & {bride}"),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(<div class="wedding-fade-up"[^>]*><h2[^>]*>)[^<]*(</h2>)',
-        r'\g<1>' + ev_title + r'\g<2>',
+        group_replacement(ev_title),
         html,
         flags=re.I
     )
     # Event details spans
     html = re.sub(
         r'(stroke-width="1\.8"></path></svg></span><span style="font-size:15px;line-height:1\.35em;letter-spacing:0em;font-family:&quot;Jost-Medium&quot;, sans-serif">)[^<]*(</span></div><div style="display:inline-flex;align-items:center;gap:8px;color:rgb\(47, 36, 23\);opacity:0\.9"><span aria-hidden="true" style="display:inline-flex;color:rgb\(7, 95, 203\)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9")',
-        r'\g<1>' + ev_date + r'\g<2>',
+        group_replacement(ev_date),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(stroke-linecap="round"></path></svg></span><span style="font-size:15px;line-height:1\.35em;letter-spacing:0em;font-family:&quot;Jost-Medium&quot;, sans-serif">)[^<]*(</span></div><div style="display:inline-flex;align-items:center;gap:8px;color:rgb\(47, 36, 23\);opacity:0\.9"><span aria-hidden="true" style="display:inline-flex;color:rgb\(7, 95, 203\)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21C12 21 19 14\.5)',
-        r'\g<1>' + ev_time + r'\g<2>',
+        group_replacement(ev_time),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(stroke-width="1\.8"></circle></svg></span><span style="font-size:15px;line-height:1\.35em;letter-spacing:0em;font-family:&quot;Jost-Medium&quot;, sans-serif">)[^<]*(</span></div></div><p style="margin:0;color:rgb\(47, 36, 23\);opacity:0\.85;)',
-        r'\g<1>' + ev_venue + r'\g<2>',
+        group_replacement(ev_venue),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(<p style="margin:0;color:rgb\(47, 36, 23\);opacity:0\.85;font-size:15px;line-height:1\.35em;letter-spacing:0em;font-family:&quot;Jost-Medium&quot;, sans-serif">)[^<]*(</p><div style="display:flex;justify-content:flex-start;margin-top:6px">)',
-        r'\g<1>' + ev_desc + r'\g<2>',
+        group_replacement(ev_desc),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(<a class="wedding-cta-btn" href=")[^"]*(")',
-        r'\g<1>' + ev_url + r'\g<2>',
+        group_replacement(ev_url, attribute=True),
         html,
         flags=re.I
     )
@@ -273,7 +297,7 @@ def update_html_file(html_path, config):
     if story_text:
         html = re.sub(
             r'(data-framer-name="PARAGRAPH STORY"[^>]*><p[^>]*class="framer-text"><br class="framer-text trailing-break"></p><p[^>]*class="framer-text">).*?(</p></div>)',
-            r'\g<1>' + story_text + r'\g<2>',
+            group_replacement(story_text),
             html,
             flags=re.DOTALL | re.I
         )
@@ -282,13 +306,13 @@ def update_html_file(html_path, config):
     if rsvp_note:
         html = re.sub(
             r'(data-framer-name="RSVP Note"[^>]*><p[^>]*class="framer-text">).*?(</p></div>)',
-            r'\g<1>' + rsvp_note + r'\g<2>',
+            group_replacement(rsvp_note),
             html,
             flags=re.DOTALL | re.I
         )
         html = re.sub(
             r'(<p[^>]*class="[^"]*wedding-rsvp-note[^"]*"[^>]*>).*?(</p>)',
-            r'\g<1>' + rsvp_note + r'\g<2>',
+            group_replacement(rsvp_note),
             html,
             flags=re.DOTALL | re.I
         )
@@ -296,13 +320,13 @@ def update_html_file(html_path, config):
     # Page 7: Hashtag & Handle
     html = re.sub(
         r'(data-framer-name="#"[^>]*><p[^>]*class="framer-text">)[^<]*(</p>)',
-        r'\g<1>' + hashtag + r'\g<2>',
+        group_replacement(hashtag),
         html,
         flags=re.I
     )
     html = re.sub(
         r'(data-framer-name="THE ARTFUL INVITES"[^>]*><p[^>]*class="framer-text">)[^<]*(</p>)',
-        r'\g<1>' + insta_handle + r'\g<2>',
+        group_replacement(insta_handle),
         html,
         flags=re.I
     )
@@ -312,7 +336,7 @@ def update_html_file(html_path, config):
     music_file = music.get("file", "./Insecurities.mp3")
     html = re.sub(
         r'(<audio\s+[^>]*src=")[^"]*(")',
-        r'\g<1>' + music_file + r'\g<2>',
+        group_replacement(music_file, attribute=True),
         html,
         flags=re.I
     )
@@ -358,32 +382,32 @@ def update_html_file(html_path, config):
           <div id="wedding-countdown-venues">
             <div class="wedding-venue-card wedding-card">
               <div class="wedding-venue-badge">Wedding Ceremony</div>
-              <div class="wedding-venue-title">{wedding_ev.get("venue", "Sivagiri Velayuthaswamy Temple")}</div>
+              <div class="wedding-venue-title">{html_text(wedding_ev.get("venue", "Sivagiri Velayuthaswamy Temple"))}</div>
               <div class="wedding-venue-row datetime">
                 <span class="wedding-venue-icon">📅</span>
-                <span>{wedding_ev.get("date", "25 October 2026")} • {wedding_ev.get("time", "06:30 AM")}</span>
+                <span>{html_text(wedding_ev.get("date", "25 October 2026"))} • {html_text(wedding_ev.get("time", "06:30 AM"))}</span>
               </div>
               <div class="wedding-venue-row place">
                 <span class="wedding-venue-icon">📍</span>
-                <span>{wedding_ev.get("venue", "Sivagiri Velayuthaswamy Temple")}</span>
+                <span>{html_text(wedding_ev.get("venue", "Sivagiri Velayuthaswamy Temple"))}</span>
               </div>
-              <a href="{wedding_ev.get("location_url", "https://maps.app.goo.gl/WvQtLPBUnHoazgyu8")}" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">
+              <a href="{html_escape(wedding_ev.get("location_url", "https://maps.app.goo.gl/WvQtLPBUnHoazgyu8"), quote=True)}" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">
                 {map_svg}
                 <span>View on Google Maps</span>
               </a>
             </div>
             <div class="wedding-venue-card reception-card">
               <div class="wedding-venue-badge">Reception</div>
-              <div class="wedding-venue-title">{reception_ev.get("venue", "Uthami Ponnusamy Thirumana Mandapam")}</div>
+              <div class="wedding-venue-title">{html_text(reception_ev.get("venue", "Uthami Ponnusamy Thirumana Mandapam"))}</div>
               <div class="wedding-venue-row datetime">
                 <span class="wedding-venue-icon">📅</span>
-                <span>{reception_ev.get("date", "24 October 2026")} • {reception_ev.get("time", "7:30 PM")}</span>
+                <span>{html_text(reception_ev.get("date", "24 October 2026"))} • {html_text(reception_ev.get("time", "7:30 PM"))}</span>
               </div>
               <div class="wedding-venue-row place">
                 <span class="wedding-venue-icon">📍</span>
-                <span>{reception_ev.get("venue", "Uthami Ponnusamy Thirumana Mandapam")}</span>
+                <span>{html_text(reception_ev.get("venue", "Uthami Ponnusamy Thirumana Mandapam"))}</span>
               </div>
-              <a href="{reception_ev.get("location_url", "https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7")}" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">
+              <a href="{html_escape(reception_ev.get("location_url", "https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7"), quote=True)}" target="_blank" rel="noopener noreferrer" class="wedding-venue-map-link">
                 {map_svg}
                 <span>View on Google Maps</span>
               </a>
@@ -439,7 +463,7 @@ def update_html_file(html_path, config):
             return block
         html = re.sub(r'<div class="framer-uuu3on-container".*?<!--/\$-->\s*</div>', replace_nan_timer, html, flags=re.DOTALL)
     except Exception as e:
-        pass
+        print(f"Warning: Could not calculate initial countdown: {e}", file=sys.stderr)
 
     # Ensure scripts and container hiding styles are injected in <head>
     head_override_style = '''<style id="wedding-head-overrides">
@@ -511,11 +535,18 @@ def update_html_file(html_path, config):
 		width: 100% !important;
 		max-width: 100% !important;
 	}
-	@media (max-width: 809.98px) {
-		.framer-m7ulU .framer-djxj6a,
-		.framer-m7ulU .framer-gj6wzl {
-			height: 844px !important;
-		}
+	.framer-m7ulU .framer-djxj6a {
+		height: max(844px, 150vw) !important;
+		min-height: 844px !important;
+		aspect-ratio: auto !important;
+		overflow: hidden !important;
+	}
+	.framer-m7ulU .framer-gj6wzl {
+		inset: 0 !important;
+		height: 100% !important;
+		aspect-ratio: auto !important;
+		transform: none !important;
+		overflow: hidden !important;
 	}
 
 	/* Completely hide all legacy Framer Page 2 elements so they never collide */
@@ -547,41 +578,44 @@ def update_html_file(html_path, config):
 
 	.wedding-invitation-stage {
 		position: absolute !important;
-		top: 50% !important;
-		left: 50% !important;
-		transform: translate(-50%, -50%) !important;
-		width: min(84%, 520px) !important;
-		height: 76% !important;
-		max-height: 80% !important;
-		display: flex !important;
-		flex-direction: column !important;
-		align-items: center !important;
-		justify-content: space-between !important;
+		top: 1.5% !important;
+		left: 21.25% !important;
+		width: 57.5% !important;
+		height: 97% !important;
+		max-height: none !important;
+		transform: none !important;
+		display: block !important;
 		box-sizing: border-box !important;
-		padding: clamp(6px, 1.2vh, 18px) clamp(8px, 2vw, 20px) !important;
+		padding: 0 !important;
 		z-index: 15 !important;
 		pointer-events: auto !important;
 		text-align: center !important;
+		overflow: hidden !important;
+		container-type: inline-size !important;
 	}
 
 	/* Deity & Mantra */
 	.wis-deity-wrap {
+		position: absolute !important;
+		top: 3% !important;
+		left: 0 !important;
+		width: 100% !important;
 		display: flex !important;
 		flex-direction: column !important;
 		align-items: center !important;
-		justify-content: center !important;
-		gap: clamp(2px, 0.3vh, 5px) !important;
+		justify-content: flex-start !important;
+		gap: clamp(1px, 0.5cqw, 5px) !important;
 		margin: 0 !important;
 	}
 	.wis-deity-img {
-		width: clamp(32px, 4.2vh, 52px) !important;
-		height: clamp(32px, 4.2vh, 52px) !important;
+		width: clamp(28px, 9cqw, 58px) !important;
+		height: clamp(28px, 9cqw, 58px) !important;
 		object-fit: contain !important;
 		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15)) !important;
 	}
 	.wis-mantra {
 		font-family: "Philosopher", sans-serif !important;
-		font-size: clamp(10px, 1.3vh, 13.5px) !important;
+		font-size: clamp(7px, 2.6cqw, 14px) !important;
 		font-weight: 700 !important;
 		letter-spacing: 0.12em !important;
 		color: rgb(211, 127, 165) !important;
@@ -591,13 +625,17 @@ def update_html_file(html_path, config):
 
 	/* Luxurious Script "Invite" */
 	.wis-invite-wrap {
+		position: absolute !important;
+		top: 16% !important;
+		left: 0 !important;
+		width: 100% !important;
 		margin: 0 !important;
 		padding: 0 !important;
 		line-height: 1 !important;
 	}
 	.wis-invite-title {
 		font-family: "Luxurious Script", cursive, sans-serif !important;
-		font-size: clamp(42px, 6.8vh, 88px) !important;
+		font-size: clamp(34px, 13cqw, 92px) !important;
 		line-height: 0.95 !important;
 		color: rgb(41, 134, 196) !important;
 		margin: 0 !important;
@@ -608,41 +646,44 @@ def update_html_file(html_path, config):
 
 	/* Unified 5-part Family Lineage Block */
 	.wis-family-block {
+		position: absolute !important;
+		top: 29% !important;
+		left: 2% !important;
+		width: 96% !important;
 		font-family: "Abhaya Libre", serif !important;
 		color: rgb(94, 94, 92) !important;
 		line-height: 1.34 !important;
-		width: 100% !important;
-		max-width: 460px !important;
+		max-width: none !important;
 		margin: 0 auto !important;
 		text-align: center !important;
 	}
 	.wis-family-block .wis-blessings {
-		font-size: clamp(11px, 1.4vh, 14.5px) !important;
+		font-size: clamp(8px, 2.6cqw, 16px) !important;
 		line-height: 1.32 !important;
 		margin: 0 0 clamp(3px, 0.6vh, 6px) 0 !important;
 	}
 	.wis-family-block .wis-lineage {
-		font-size: clamp(11px, 1.4vh, 14.5px) !important;
+		font-size: clamp(8px, 2.6cqw, 16px) !important;
 		line-height: 1.3 !important;
 		margin: 0 !important;
 	}
 	.wis-family-block .wis-parents {
-		font-size: clamp(12.5px, 1.6vh, 16.5px) !important;
+		font-size: clamp(9px, 3cqw, 18px) !important;
 		font-weight: 700 !important;
 		color: rgb(60, 60, 58) !important;
 	}
 	.wis-family-block .wis-grandparents {
-		font-size: clamp(12px, 1.55vh, 16px) !important;
+		font-size: clamp(9px, 2.9cqw, 17px) !important;
 		font-weight: 700 !important;
 		color: rgb(75, 75, 73) !important;
 	}
 	.wis-family-block .wis-connector {
-		font-size: clamp(10.5px, 1.3vh, 13.5px) !important;
+		font-size: clamp(8px, 2.4cqw, 14px) !important;
 		font-style: italic !important;
 		margin: clamp(2px, 0.3vh, 5px) 0 !important;
 	}
 	.wis-family-block .wis-invite-text {
-		font-size: clamp(11px, 1.4vh, 14.5px) !important;
+		font-size: clamp(8px, 2.6cqw, 16px) !important;
 		line-height: 1.3 !important;
 		margin: clamp(3px, 0.6vh, 7px) auto 0 auto !important;
 		max-width: 420px !important;
@@ -650,16 +691,20 @@ def update_html_file(html_path, config):
 
 	/* Couple Names (Rajkumar & Rubitha) */
 	.wis-couple-wrap {
+		position: absolute !important;
+		top: 67% !important;
+		left: 0 !important;
+		width: 100% !important;
 		display: flex !important;
 		flex-direction: column !important;
 		align-items: center !important;
 		justify-content: center !important;
 		gap: clamp(0px, 0.2vh, 3px) !important;
-		margin: clamp(2px, 0.5vh, 8px) 0 !important;
+		margin: 0 !important;
 	}
 	.wis-couple-wrap .wis-name {
 		font-family: "Junge", serif !important;
-		font-size: clamp(30px, 4.8vh, 64px) !important;
+		font-size: clamp(26px, 13cqw, 82px) !important;
 		line-height: 1 !important;
 		letter-spacing: -0.04em !important;
 		color: rgb(232, 190, 116) !important;
@@ -669,7 +714,7 @@ def update_html_file(html_path, config):
 	}
 	.wis-couple-wrap .wis-amp {
 		font-family: "Amethysta", serif !important;
-		font-size: clamp(16px, 2.3vh, 28px) !important;
+		font-size: clamp(14px, 4.8cqw, 30px) !important;
 		line-height: 1 !important;
 		color: rgb(42, 134, 196) !important;
 		margin: clamp(-2px, -0.3vh, 0px) 0 !important;
@@ -677,12 +722,16 @@ def update_html_file(html_path, config):
 
 	/* "On the following events" */
 	.wis-events-badge {
-		margin: clamp(2px, 0.3vh, 6px) 0 0 0 !important;
+		position: absolute !important;
+		top: 88% !important;
+		left: 0 !important;
+		width: 100% !important;
+		margin: 0 !important;
 	}
 	.wis-events-badge p {
 		font-family: "EB Garamond", serif !important;
 		font-weight: 700 !important;
-		font-size: clamp(16px, 2.4vh, 28px) !important;
+		font-size: clamp(12px, 5.5cqw, 32px) !important;
 		color: rgb(42, 134, 196) !important;
 		margin: 0 !important;
 		text-align: center !important;
@@ -871,23 +920,33 @@ def update_html_file(html_path, config):
 	}
   </style>'''
 
-    scripts_to_inject = head_override_style + '\n\t<link rel="stylesheet" href="./assets/css/wedding_rsvp.css">\n\t<script src="./wedding_config.js"></script>\n\t<script src="./assets/js/wedding_loader.js"></script>\n'
-    
-    # Remove old style tag if present
-    html = re.sub(r'<style>\.framer-fwz7u-container\{display:none!important;\}</style>\s*', '', html)
-    html = re.sub(r'<style id="wedding-head-overrides">.*?</style>\s*', '', html, flags=re.DOTALL)
-    html = re.sub(r'<link rel="stylesheet" href="\.?/assets/css/wedding_rsvp\.css">\s*', '', html)
-    
+    # Layout CSS lives in index.html. Updater changes content/assets only.
+    runtime_assets = (
+        '\t<link rel="stylesheet" href="./assets/css/wedding_rsvp.css">\n'
+        '\t<script src="./wedding_config.js"></script>\n'
+        '\t<script src="./assets/js/wedding_loader.js?v=17"></script>\n'
+    )
     if './wedding_config.js' not in html:
         head_pos = html.find('</head>')
         if head_pos != -1:
-            html = html[:head_pos] + '\t' + scripts_to_inject + html[head_pos:]
+            html = html[:head_pos] + runtime_assets + html[head_pos:]
     else:
-        # Re-inject latest style and rsvp css right before wedding_config.js script
+        # Add missing runtime assets without touching existing layout styles.
         js_marker = '<script src="./wedding_config.js">'
         idx = html.find(js_marker)
-        if idx != -1:
-            html = html[:idx] + head_override_style + '\n\t<link rel="stylesheet" href="./assets/css/wedding_rsvp.css">\n\t' + html[idx:]
+        if idx != -1 and './assets/css/wedding_rsvp.css' not in html:
+            html = html[:idx] + '\t<link rel="stylesheet" href="./assets/css/wedding_rsvp.css">\n\t' + html[idx:]
+        if 'assets/js/wedding_loader.js' not in html and idx != -1:
+            end_idx = html.find('</script>', idx)
+            if end_idx != -1:
+                end_idx += len('</script>')
+                html = html[:end_idx] + '\n\t<script src="./assets/js/wedding_loader.js?v=17"></script>' + html[end_idx:]
+
+    html = re.sub(
+        r'(<script src="\./assets/js/wedding_loader\.js)(?:\?v=\d+)?(")',
+        r'\1?v=17\2',
+        html
+    )
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
