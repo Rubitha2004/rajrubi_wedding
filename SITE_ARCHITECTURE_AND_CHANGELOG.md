@@ -431,3 +431,19 @@ Because all paths are strictly relative (`./assets/...`), the website works imme
 - **Halt Permanence**: Added `hasReachedTarget` state lock to ensure that once auto-scroll smoothly glides to the Countdown and Venue cards, it halts permanently and does not resume scrolling down past this critical information.
 - **Interaction & Audio Guard**: User taps, gestures, audio autoplay unlock, and track transitions will no longer trigger resume timers if the page is already at or past the Countdown section.
 - **Scroll-Up Re-engagement**: If a user manually scrolls back up to the top of the invitation to re-read it, the engine gracefully re-enables auto-scroll to guide them back down to the Countdown section.
+
+### Auspicious Heritage Loading Screen & Synchronized Post-Load Triggers
+- **Traditional South Indian Loading Screen**: Implemented a warm parchment ivory & antique gold fullscreen loading screen (`#weddingLoadingScreen`) featuring an animated brass Diya lamp with glowing warm flame pulse (`@keyframes wlsFlamePulse`), sacred mantra (`॥ ஸ்ரீ முருகன் துணை ॥`), couple names in shimmering gold serif (`Rajkumar & Rubitha`), and subtitle (`WEDDING INVITATION`).
+- **Comprehensive Multi-Asset Loading Tracker**: Created an asset loading coordinator that tracks:
+  1. DOM readiness & window `load` event.
+  2. Web fonts resolution via `document.fonts.ready`.
+  3. Key images buffering (Hero Gopuram, deity portrait, temple archways).
+  4. Audio song buffer readiness via HTML5 audio deck `canplay` / `loadeddata` / `readyState >= 2`.
+- **Smooth Cinematic Progress Bar**: Features a golden linear progress track and live percentage counter (`0%` to `100%`) with dynamic auspicious status messages:
+  - `0% - 25%`: *"Welcoming you to our celebration..."*
+  - `25% - 55%`: *"Harmonizing auspicious melodies..."*
+  - `55% - 85%`: *"Gathering sacred blessings..."*
+  - `85% - 99%`: *"Unveiling the celebration..."*
+  - `100%`: *"Auspicious Beginnings ✨"*
+- **User Gesture Autoplay Unlock**: Includes an *"Open Invitation ✦"* golden pill button revealed at 100% load. Clicking the button or tapping the screen dismisses the loading screen immediately while registering a direct user gesture to bypass iOS/Safari/Chrome unmuted audio autoplay restrictions. Also supports automatic dismissal after a 600ms grace period.
+- **Synchronized Song & Auto-Scroll Start**: Auto-scroll and background music playback no longer start prematurely on arbitrary fixed timers. Both are held until the website, fonts, images, and audio track have completely loaded and the loading screen dissolves with an elegant curtain scale-up and fade transition (`0.85s`), after which music plays and auto-scroll smoothly glides down the page.

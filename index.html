@@ -1639,6 +1639,355 @@
         max-width: calc(100vw - 24px) !important;
       }
     }
+
+    /* 7. Auspicious South Indian Heritage Loading Screen */
+    #weddingLoadingScreen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      z-index: 10000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #FBF8F2;
+      background-image: 
+        radial-gradient(ellipse at 50% 35%, rgba(212, 163, 89, 0.16) 0%, rgba(251, 248, 242, 0.95) 65%),
+        radial-gradient(circle at 85% 15%, rgba(41, 134, 196, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at 15% 85%, rgba(88, 11, 26, 0.05) 0%, transparent 45%),
+        linear-gradient(180deg, #FBF8F2 0%, #F5EEE6 100%);
+      color: #332B25;
+      font-family: 'Abhaya Libre', 'Junge', serif;
+      user-select: none;
+      -webkit-user-select: none;
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+      transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1), transform 0.85s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.85s;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    #weddingLoadingScreen.is-loaded {
+      opacity: 0;
+      transform: scale(1.035);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #weddingLoadingScreen.is-hidden {
+      display: none !important;
+    }
+
+    .wls-frame-border {
+      position: absolute;
+      inset: 16px;
+      border: 1px solid rgba(212, 163, 89, 0.38);
+      border-radius: 12px;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 5px #FBF8F2, inset 0 0 0 6px rgba(212, 163, 89, 0.18);
+    }
+
+    @media (max-width: 600px) {
+      .wls-frame-border {
+        inset: 10px;
+        box-shadow: inset 0 0 0 3px #FBF8F2, inset 0 0 0 4px rgba(212, 163, 89, 0.15);
+      }
+    }
+
+    .wls-ornament-corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: #D4A359;
+      border-style: solid;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .wls-corner-tl {
+      top: 24px;
+      left: 24px;
+      border-width: 2px 0 0 2px;
+      border-top-left-radius: 6px;
+    }
+    .wls-corner-tr {
+      top: 24px;
+      right: 24px;
+      border-width: 2px 2px 0 0;
+      border-top-right-radius: 6px;
+    }
+    .wls-corner-bl {
+      bottom: 24px;
+      left: 24px;
+      border-width: 0 0 2px 2px;
+      border-bottom-left-radius: 6px;
+    }
+    .wls-corner-br {
+      bottom: 24px;
+      right: 24px;
+      border-width: 0 2px 2px 0;
+      border-bottom-right-radius: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .wls-corner-tl { top: 16px; left: 16px; width: 20px; height: 20px; }
+      .wls-corner-tr { top: 16px; right: 16px; width: 20px; height: 20px; }
+      .wls-corner-bl { bottom: 16px; left: 16px; width: 20px; height: 20px; }
+      .wls-corner-br { bottom: 16px; right: 16px; width: 20px; height: 20px; }
+    }
+
+    .wls-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      max-width: 440px;
+      width: 90vw;
+      padding: 24px 20px;
+    }
+
+    .wls-lamp-wrap {
+      margin-bottom: 12px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wls-diya-svg {
+      width: 56px;
+      height: 56px;
+      filter: drop-shadow(0 4px 14px rgba(212, 163, 89, 0.4));
+    }
+
+    .wls-flame-glow {
+      transform-origin: 24px 22px;
+      animation: wlsFlamePulse 2.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes wlsFlamePulse {
+      0% {
+        transform: scale(0.96) translateY(0.5px);
+        filter: drop-shadow(0 0 4px rgba(255, 179, 0, 0.7));
+      }
+      100% {
+        transform: scale(1.08) translateY(-1px);
+        filter: drop-shadow(0 0 14px rgba(255, 120, 0, 0.95)) drop-shadow(0 0 20px rgba(212, 163, 89, 0.75));
+      }
+    }
+
+    .wls-mantra {
+      font-family: 'Abhaya Libre', 'Noto Serif Tamil', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #2986C4;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      margin: 0 0 14px 0;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+
+    @media (max-width: 480px) {
+      .wls-mantra {
+        font-size: 13.5px;
+        letter-spacing: 0.08em;
+      }
+    }
+
+    .wls-names-heading {
+      margin: 0 0 6px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .wls-name-groom,
+    .wls-name-bride {
+      font-family: 'Junge', 'Abhaya Libre', serif;
+      font-size: 34px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: #C5933A;
+      background: linear-gradient(135deg, #B58428 0%, #D4A359 40%, #E8C175 60%, #B58428 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: wlsShimmer 4s ease-in-out infinite;
+    }
+
+    .wls-name-amp {
+      font-family: 'Amethysta', 'Abhaya Libre', serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: #2986C4;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 480px) {
+      .wls-name-groom,
+      .wls-name-bride {
+        font-size: 27px;
+      }
+      .wls-name-amp {
+        font-size: 22px;
+      }
+    }
+
+    @keyframes wlsShimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .wls-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 240px;
+      margin: 4px 0 10px 0;
+    }
+
+    .wls-divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 163, 89, 0.5), transparent);
+    }
+
+    .wls-divider-gem {
+      color: #D4A359;
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .wls-subtitle {
+      margin: 0 0 24px 0;
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      font-weight: 600;
+      color: #8C827A;
+      text-transform: uppercase;
+    }
+
+    .wls-progress-box {
+      width: 100%;
+      max-width: 290px;
+      margin-bottom: 16px;
+    }
+
+    .wls-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(212, 163, 89, 0.18);
+      border-radius: 99px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .wls-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #D4A359 0%, #F5D77F 60%, #2986C4 100%);
+      border-radius: 99px;
+      transition: width 0.22s ease-out;
+      position: relative;
+    }
+
+    .wls-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      animation: wlsBarSweep 1.8s infinite linear;
+    }
+
+    @keyframes wlsBarSweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .wls-details {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #7A726A;
+    }
+
+    .wls-status-msg {
+      font-style: italic;
+      font-size: 12.5px;
+      color: #615952;
+      transition: opacity 0.2s ease;
+      text-align: left;
+    }
+
+    .wls-percentage {
+      font-weight: 700;
+      color: #8E2034;
+      letter-spacing: 0.04em;
+      min-width: 38px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .wls-action-area {
+      margin-top: 10px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wls-enter-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #FAF7F2 0%, #F3EBDD 100%);
+      border: 1px solid #D4A359;
+      border-radius: 30px;
+      color: #580B1A;
+      font-family: 'Abhaya Libre', 'Junge', serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(212, 163, 89, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, border-color 0.2s ease;
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+    }
+
+    .wls-enter-btn.is-ready {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .wls-enter-btn:hover {
+      transform: translateY(-2px);
+      border-color: #B58428;
+      box-shadow: 0 6px 20px rgba(212, 163, 89, 0.38);
+    }
+
+    .wls-enter-btn:active {
+      transform: translateY(0);
+    }
   </style>
   <link rel="stylesheet" href="./assets/css/wedding_rsvp.css">
   <script src="./wedding_config.js"></script>
@@ -6194,6 +6543,83 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
   <!-- Start of bodyStart -->
 
   <!-- End of bodyStart -->
+
+  <!-- Auspicious South Indian Heritage Loading Screen -->
+  <div id="weddingLoadingScreen" class="wedding-loading-screen" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading Invitation">
+    <div class="wls-frame-border" aria-hidden="true"></div>
+    <div class="wls-ornament-corner wls-corner-tl" aria-hidden="true"></div>
+    <div class="wls-ornament-corner wls-corner-tr" aria-hidden="true"></div>
+    <div class="wls-ornament-corner wls-corner-bl" aria-hidden="true"></div>
+    <div class="wls-ornament-corner wls-corner-br" aria-hidden="true"></div>
+    
+    <div class="wls-content">
+      <!-- Auspicious Diya / Sacred Lamp with Flickering Warm Flame -->
+      <div class="wls-lamp-wrap">
+        <svg class="wls-diya-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="wlsFlameGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FFF8D6"/>
+              <stop offset="30%" stop-color="#FFC107"/>
+              <stop offset="70%" stop-color="#FF6D00"/>
+              <stop offset="100%" stop-color="#DD2C00"/>
+            </radialGradient>
+            <linearGradient id="wlsBrassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F5D77F"/>
+              <stop offset="45%" stop-color="#D4A359"/>
+              <stop offset="100%" stop-color="#9C7226"/>
+            </linearGradient>
+            <filter id="wlsGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          <path d="M19 38 L29 38 L32 43 L16 43 Z" fill="url(#wlsBrassGrad)"/>
+          <path d="M11 27 C11 27 14 36 24 36 C34 36 37 27 37 27 C37 31 33 38 24 38 C15 38 11 31 11 27 Z" fill="url(#wlsBrassGrad)"/>
+          <ellipse cx="24" cy="27" rx="13" ry="3.5" fill="#C5933A"/>
+          <g class="wls-flame-glow" filter="url(#wlsGlowFilter)">
+            <path d="M24 5 C24 5, 17 15, 17 21 C17 25.5 20.1 29 24 29 C27.9 29 31 25.5 31 21 C31 15 24 5 24 5 Z" fill="url(#wlsFlameGrad)"/>
+            <path d="M24 12 C24 12, 20 18, 20 22 C20 24.5 21.8 27 24 27 C26.2 27 28 24.5 28 22 C28 18 24 12 24 12 Z" fill="#FFFCE6"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Sacred Deity Mantra -->
+      <p class="wls-mantra" id="wlsMantraText">॥ ஸ்ரீ முருகன் துணை ॥</p>
+
+      <!-- Couple Names with Shimmering Serif Typography -->
+      <div class="wls-names-heading">
+        <span class="wls-name-groom" id="wlsGroomName">Rajkumar</span>
+        <span class="wls-name-amp">&amp;</span>
+        <span class="wls-name-bride" id="wlsBrideName">Rubitha</span>
+      </div>
+
+      <!-- Elegant Divider & Subtitle -->
+      <div class="wls-divider">
+        <span class="wls-divider-line"></span>
+        <span class="wls-divider-gem">✦</span>
+        <span class="wls-divider-line"></span>
+      </div>
+      <p class="wls-subtitle">WEDDING INVITATION</p>
+
+      <!-- Sleek Progress Section -->
+      <div class="wls-progress-box">
+        <div class="wls-track">
+          <div class="wls-fill" id="wlsBarFill"></div>
+        </div>
+        <div class="wls-details">
+          <span class="wls-status-msg" id="wlsStatusMsg">Welcoming you to our celebration...</span>
+          <span class="wls-percentage" id="wlsPercentage">0%</span>
+        </div>
+      </div>
+
+      <!-- Interactive Action / Enter Button -->
+      <div class="wls-action-area">
+        <button type="button" class="wls-enter-btn" id="wlsEnterBtn" aria-label="Open Invitation">
+          <span>Open Invitation ✦</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div id="main"
     data-framer-hydrate-v2="{&quot;routeId&quot;:&quot;augiA20Il&quot;,&quot;localeId&quot;:&quot;default&quot;,&quot;breakpoints&quot;:[{&quot;hash&quot;:&quot;ayqnlw&quot;,&quot;mediaQuery&quot;:&quot;(min-width: 1920px)&quot;},{&quot;hash&quot;:&quot;8l4zif&quot;,&quot;mediaQuery&quot;:&quot;(min-width: 1440px) and (max-width: 1919.98px)&quot;},{&quot;hash&quot;:&quot;72rtr7&quot;,&quot;mediaQuery&quot;:&quot;(min-width: 1200px) and (max-width: 1439.98px)&quot;},{&quot;hash&quot;:&quot;1lmndnn&quot;,&quot;mediaQuery&quot;:&quot;(min-width: 810px) and (max-width: 1199.98px)&quot;},{&quot;hash&quot;:&quot;1fqmtcv&quot;,&quot;mediaQuery&quot;:&quot;(max-width: 809.98px)&quot;}]}"

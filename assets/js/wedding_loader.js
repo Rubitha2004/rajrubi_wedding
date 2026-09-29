@@ -663,6 +663,9 @@
     setupCinematicStageReveals(config);
     initializeTaglineFlowSync();
     scheduleTaglineFlowSync();
+
+    // 12. Auspicious Loading Screen Coordinator
+    setupWeddingLoadingScreen(config);
     } finally {
       setTimeout(function () {
         isApplyingConfig = false;
@@ -2068,28 +2071,32 @@
     updateMuteState(isMuted);
     updatePlayState(false);
 
-    // 11. Autoplay with Graceful Browser Policy Handling
+    // 11. Music Playback Controller & Autoplay Handling
+    var triggerMusicPlayback = function () {
+      if (!isPlaying) {
+        player.play();
+      }
+    };
+    window.__weddingStartMusic = triggerMusicPlayback;
+
+    var gestureUnlock = function () {
+      triggerMusicPlayback();
+      ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+        window.removeEventListener(ev, gestureUnlock);
+      });
+    };
+    ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+      window.addEventListener(ev, gestureUnlock, { passive: true });
+    });
+
+    // Fallback: If loading screen is disabled in config, trigger after delay
     if (musicConfig.autoplay !== false && !window.__weddingMusicAutoplayInitiated) {
       window.__weddingMusicAutoplayInitiated = true;
-      var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
-
-      var triggerMusicPlayback = function () {
-        if (!isPlaying) {
-          player.play();
-        }
-      };
-
-      setTimeout(triggerMusicPlayback, autoPlayDelay);
-
-      var gestureUnlock = function () {
-        triggerMusicPlayback();
-        ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
-          window.removeEventListener(ev, gestureUnlock);
-        });
-      };
-      ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
-        window.addEventListener(ev, gestureUnlock, { passive: true });
-      });
+      var loadCfg = (config && config.loading_screen) ? config.loading_screen : {};
+      if (loadCfg.enabled === false) {
+        var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
+        setTimeout(triggerMusicPlayback, autoPlayDelay);
+      }
     }
   }
 
@@ -2304,18 +2311,28 @@
       }
     }
 
-    // Start auto-scroll after delay
-    setTimeout(function () {
-      if (isManuallyPaused) return;
-      scrollPos = window.scrollY || window.pageYOffset || 0;
-      var targetStop = getTargetStop();
-      if (scrollPos < targetStop - 15 && !isLoopRunning) {
-        hasReachedTarget = false;
-        isLoopRunning = true;
-        lastTime = null;
-        requestAnimationFrame(step);
-      }
-    }, delaySec * 1000);
+    // Start auto-scroll after delay once site has loaded and revealed
+    window.__weddingStartAutoScroll = function () {
+      if (window.__weddingAutoScrollStarted) return;
+      window.__weddingAutoScrollStarted = true;
+      setTimeout(function () {
+        if (isManuallyPaused) return;
+        scrollPos = window.scrollY || window.pageYOffset || 0;
+        var targetStop = getTargetStop();
+        if (scrollPos < targetStop - 15 && !isLoopRunning) {
+          hasReachedTarget = false;
+          isLoopRunning = true;
+          lastTime = null;
+          requestAnimationFrame(step);
+        }
+      }, delaySec * 1000);
+    };
+
+    // Fallback: If loading screen is disabled in config, start after delaySec
+    var loadCfg = (config && config.loading_screen) ? config.loading_screen : {};
+    if (loadCfg.enabled === false) {
+      window.__weddingStartAutoScroll();
+    }
   }
 
   // 10. Individual Element Cinematic Entrance Scroll Reveals (Triple-Layer Fail-Safe)
@@ -2472,14 +2489,369 @@
     }
   }
 
+  // 12. Auspicious South Indian Heritage Loading Screen Coordinator
+  function setupWeddingLoadingScreen(config) {
+    if (window.__weddingLoadingScreenInitialized) {
+      if (config && config.couple) {
+        var groom = config.couple.groom_name || 'Rajkumar';
+        var bride = config.couple.bride_name || 'Rubitha';
+        var mantra = config.couple.mantra || '॥ ஸ்ரீ முருகன் துணை ॥';
+        var gEl = document.getElementById('wlsGroomName');
+        var bEl = document.getElementById('wlsBrideName');
+        var mEl = document.getElementById('wlsMantraText');
+        if (gEl) setTextContent(gEl, groom);
+        if (bEl) setTextContent(bEl, bride);
+        if (mEl) setTextContent(mEl, mantra);
+      }
+      return;
+    }
+    window.__weddingLoadingScreenInitialized = true;
+
+    var loadCfg = (config && config.loading_screen) ? config.loading_screen : {};
+    if (loadCfg.enabled === false) {
+      var existingEl = document.getElementById('weddingLoadingScreen');
+      if (existingEl) existingEl.style.display = 'none';
+      if (window.__weddingStartMusic) window.__weddingStartMusic();
+      if (window.__weddingStartAutoScroll) window.__weddingStartAutoScroll();
+      return;
+    }
+
+    var minDurationMs = (loadCfg.min_duration_seconds !== undefined ? loadCfg.min_duration_seconds : 1.2) * 1000;
+    var maxTimeoutMs = (loadCfg.max_duration_seconds !== undefined ? loadCfg.max_duration_seconds : 5.0) * 1000;
+    var autoDismissDelayMs = loadCfg.auto_dismiss_delay_ms !== undefined ? loadCfg.auto_dismiss_delay_ms : 600;
+
+    var loadingEl = document.getElementById('weddingLoadingScreen');
+    if (!loadingEl) {
+      loadingEl = document.createElement('div');
+      loadingEl.id = 'weddingLoadingScreen';
+      loadingEl.className = 'wedding-loading-screen';
+      loadingEl.setAttribute('role', 'progressbar');
+      loadingEl.setAttribute('aria-valuemin', '0');
+      loadingEl.setAttribute('aria-valuemax', '100');
+      loadingEl.setAttribute('aria-valuenow', '0');
+      loadingEl.setAttribute('aria-label', 'Loading Invitation');
+      loadingEl.innerHTML = '\
+        <div class="wls-frame-border" aria-hidden="true"></div>\
+        <div class="wls-ornament-corner wls-corner-tl" aria-hidden="true"></div>\
+        <div class="wls-ornament-corner wls-corner-tr" aria-hidden="true"></div>\
+        <div class="wls-ornament-corner wls-corner-bl" aria-hidden="true"></div>\
+        <div class="wls-ornament-corner wls-corner-br" aria-hidden="true"></div>\
+        <div class="wls-content">\
+          <div class="wls-lamp-wrap">\
+            <svg class="wls-diya-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">\
+              <defs>\
+                <radialGradient id="wlsFlameGrad" cx="50%" cy="50%" r="50%">\
+                  <stop offset="0%" stop-color="#FFF8D6"/>\
+                  <stop offset="30%" stop-color="#FFC107"/>\
+                  <stop offset="70%" stop-color="#FF6D00"/>\
+                  <stop offset="100%" stop-color="#DD2C00"/>\
+                </radialGradient>\
+                <linearGradient id="wlsBrassGrad" x1="0%" y1="0%" x2="100%" y2="100%">\
+                  <stop offset="0%" stop-color="#F5D77F"/>\
+                  <stop offset="45%" stop-color="#D4A359"/>\
+                  <stop offset="100%" stop-color="#9C7226"/>\
+                </linearGradient>\
+                <filter id="wlsGlowFilter" x="-20%" y="-20%" width="140%" height="140%">\
+                  <feGaussianBlur stdDeviation="2" result="blur"/>\
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"/>\
+                </filter>\
+              </defs>\
+              <path d="M19 38 L29 38 L32 43 L16 43 Z" fill="url(#wlsBrassGrad)"/>\
+              <path d="M11 27 C11 27 14 36 24 36 C34 36 37 27 37 27 C37 31 33 38 24 38 C15 38 11 31 11 27 Z" fill="url(#wlsBrassGrad)"/>\
+              <ellipse cx="24" cy="27" rx="13" ry="3.5" fill="#C5933A"/>\
+              <g class="wls-flame-glow" filter="url(#wlsGlowFilter)">\
+                <path d="M24 5 C24 5, 17 15, 17 21 C17 25.5 20.1 29 24 29 C27.9 29 31 25.5 31 21 C31 15 24 5 24 5 Z" fill="url(#wlsFlameGrad)"/>\
+                <path d="M24 12 C24 12, 20 18, 20 22 C20 24.5 21.8 27 24 27 C26.2 27 28 24.5 28 22 C28 18 24 12 24 12 Z" fill="#FFFCE6"/>\
+              </g>\
+            </svg>\
+          </div>\
+          <p class="wls-mantra" id="wlsMantraText">॥ ஸ்ரீ முருகன் துணை ॥</p>\
+          <div class="wls-names-heading">\
+            <span class="wls-name-groom" id="wlsGroomName">Rajkumar</span>\
+            <span class="wls-name-amp">&amp;</span>\
+            <span class="wls-name-bride" id="wlsBrideName">Rubitha</span>\
+          </div>\
+          <div class="wls-divider">\
+            <span class="wls-divider-line"></span>\
+            <span class="wls-divider-gem">✦</span>\
+            <span class="wls-divider-line"></span>\
+          </div>\
+          <p class="wls-subtitle">WEDDING INVITATION</p>\
+          <div class="wls-progress-box">\
+            <div class="wls-track">\
+              <div class="wls-fill" id="wlsBarFill"></div>\
+            </div>\
+            <div class="wls-details">\
+              <span class="wls-status-msg" id="wlsStatusMsg">Welcoming you to our celebration...</span>\
+              <span class="wls-percentage" id="wlsPercentage">0%</span>\
+            </div>\
+          </div>\
+          <div class="wls-action-area">\
+            <button type="button" class="wls-enter-btn" id="wlsEnterBtn" aria-label="Open Invitation">\
+              <span>Open Invitation ✦</span>\
+            </button>\
+          </div>\
+        </div>';
+      document.body.insertBefore(loadingEl, document.body.firstChild);
+    }
+
+    if (config && config.couple) {
+      var groomName = config.couple.groom_name || 'Rajkumar';
+      var brideName = config.couple.bride_name || 'Rubitha';
+      var mantra = config.couple.mantra || '॥ ஸ்ரீ முருகன் துணை ॥';
+      var gEl = document.getElementById('wlsGroomName');
+      var bEl = document.getElementById('wlsBrideName');
+      var mEl = document.getElementById('wlsMantraText');
+      if (gEl) setTextContent(gEl, groomName);
+      if (bEl) setTextContent(bEl, brideName);
+      if (mEl) setTextContent(mEl, mantra);
+    }
+
+    var barFill = document.getElementById('wlsBarFill');
+    var statusMsg = document.getElementById('wlsStatusMsg');
+    var percentageEl = document.getElementById('wlsPercentage');
+    var enterBtn = document.getElementById('wlsEnterBtn');
+
+    var startTime = performance.now();
+    var isDismissed = false;
+    var targetProgress = 20;
+    var currentProgress = 0;
+    var rafId = null;
+
+    // Trackers
+    var domReady = (document.readyState === 'interactive' || document.readyState === 'complete');
+    var windowReady = (document.readyState === 'complete');
+    var fontsReady = false;
+    var imagesRatio = 0;
+    var audioReady = false;
+
+    function updateTargetProgress() {
+      var p = 0;
+      if (domReady) p += 20;
+      if (windowReady) p += 15;
+      if (fontsReady) p += 15;
+      p += Math.round(imagesRatio * 25);
+      if (audioReady) p += 25;
+
+      targetProgress = Math.max(targetProgress, Math.min(100, p));
+    }
+
+    // 1. DOM & Window Load
+    if (document.readyState === 'complete') {
+      domReady = true;
+      windowReady = true;
+      updateTargetProgress();
+    } else {
+      document.addEventListener('DOMContentLoaded', function () {
+        domReady = true;
+        updateTargetProgress();
+      });
+      window.addEventListener('load', function () {
+        domReady = true;
+        windowReady = true;
+        updateTargetProgress();
+      });
+    }
+
+    // 2. Fonts
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        fontsReady = true;
+        updateTargetProgress();
+      }).catch(function () {
+        fontsReady = true;
+        updateTargetProgress();
+      });
+    } else {
+      fontsReady = true;
+      updateTargetProgress();
+    }
+
+    // 3. Images
+    function monitorImages() {
+      var imgs = Array.from(document.images || []);
+      if (imgs.length === 0) {
+        imagesRatio = 1;
+        updateTargetProgress();
+        return;
+      }
+      var loadedCount = 0;
+      function checkImg() {
+        loadedCount++;
+        imagesRatio = Math.min(1, loadedCount / imgs.length);
+        updateTargetProgress();
+      }
+      imgs.forEach(function (img) {
+        if (img.complete && img.naturalWidth !== 0) {
+          checkImg();
+        } else {
+          img.addEventListener('load', checkImg, { once: true });
+          img.addEventListener('error', checkImg, { once: true });
+        }
+      });
+      setTimeout(function () {
+        imagesRatio = 1;
+        updateTargetProgress();
+      }, 3500);
+    }
+    monitorImages();
+
+    // 4. Songs / Background Audio Deck
+    function monitorAudio() {
+      var deck = document.getElementById('wedding-custom-audio');
+      if (!deck) {
+        var audioPoll = setInterval(function () {
+          var d = document.getElementById('wedding-custom-audio');
+          if (d) {
+            clearInterval(audioPoll);
+            attachDeckListener(d);
+          }
+        }, 100);
+        setTimeout(function () {
+          clearInterval(audioPoll);
+          audioReady = true;
+          updateTargetProgress();
+        }, 3000);
+        return;
+      }
+      attachDeckListener(deck);
+
+      function attachDeckListener(d) {
+        if (d.readyState >= 2) {
+          audioReady = true;
+          updateTargetProgress();
+          return;
+        }
+        var audioDone = false;
+        function onAudioData() {
+          if (audioDone) return;
+          audioDone = true;
+          audioReady = true;
+          updateTargetProgress();
+        }
+        d.addEventListener('canplay', onAudioData, { once: true });
+        d.addEventListener('canplaythrough', onAudioData, { once: true });
+        d.addEventListener('loadeddata', onAudioData, { once: true });
+        d.addEventListener('error', onAudioData, { once: true });
+        setTimeout(onAudioData, 3500);
+      }
+    }
+    monitorAudio();
+
+    // 5. Dismissal Execution
+    function executeDismissal() {
+      if (isDismissed) return;
+      isDismissed = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (autoDismissTimer) {
+        clearTimeout(autoDismissTimer);
+        autoDismissTimer = null;
+      }
+
+      if (loadingEl) {
+        loadingEl.classList.add('is-loaded');
+        setTimeout(function () {
+          loadingEl.classList.add('is-hidden');
+        }, 900);
+      }
+
+      // 1. Start music playback
+      if (window.__weddingStartMusic) {
+        window.__weddingStartMusic();
+      } else if (window.__weddingMusicPlayer) {
+        window.__weddingMusicPlayer.play();
+      }
+
+      // 2. Start auto-scroll once website is fully revealed
+      if (window.__weddingStartAutoScroll) {
+        window.__weddingStartAutoScroll();
+      }
+    }
+
+    // Tap / Click handling (gesture unlock for iOS & Chrome)
+    var autoDismissTimer = null;
+    function setupDismissInteractions() {
+      if (enterBtn) {
+        enterBtn.classList.add('is-ready');
+        enterBtn.onclick = function (e) {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          executeDismissal();
+        };
+      }
+      loadingEl.onclick = function (e) {
+        if (currentProgress >= 90) {
+          executeDismissal();
+        }
+      };
+      if (!autoDismissTimer) {
+        autoDismissTimer = setTimeout(function () {
+          executeDismissal();
+        }, autoDismissDelayMs);
+      }
+    }
+
+    // 6. Animation Step Loop
+    function renderStep() {
+      var elapsed = performance.now() - startTime;
+      var timeMinRatio = Math.min(1, elapsed / minDurationMs);
+
+      // Force 100% if maximum timeout reached
+      if (elapsed >= maxTimeoutMs) {
+        targetProgress = 100;
+        timeMinRatio = 1;
+      }
+
+      // Constrain progress by min duration so animation doesn't vanish too fast
+      var effectiveTarget = (targetProgress === 100) ? (timeMinRatio >= 1 ? 100 : Math.min(96, targetProgress * timeMinRatio)) : Math.min(95, targetProgress);
+
+      var diff = effectiveTarget - currentProgress;
+      if (diff > 0) {
+        currentProgress += Math.max(0.4, diff * 0.14);
+      }
+      if (currentProgress > 100) currentProgress = 100;
+
+      var roundP = Math.round(currentProgress);
+      if (barFill) barFill.style.width = currentProgress.toFixed(1) + '%';
+      if (percentageEl) percentageEl.textContent = roundP + '%';
+      if (loadingEl) loadingEl.setAttribute('aria-valuenow', roundP);
+
+      // Dynamic Auspicious Status Messages
+      if (statusMsg) {
+        if (roundP < 30) {
+          statusMsg.textContent = 'Welcoming you to our celebration...';
+        } else if (roundP < 60) {
+          statusMsg.textContent = 'Harmonizing auspicious melodies...';
+        } else if (roundP < 90) {
+          statusMsg.textContent = 'Gathering sacred blessings...';
+        } else if (roundP < 100) {
+          statusMsg.textContent = 'Unveiling the celebration...';
+        } else {
+          statusMsg.textContent = 'Auspicious Beginnings ✨';
+        }
+      }
+
+      if (roundP >= 100 && timeMinRatio >= 1 && (windowReady || elapsed > 2000)) {
+        if (barFill) barFill.style.width = '100%';
+        if (percentageEl) percentageEl.textContent = '100%';
+        setupDismissInteractions();
+      } else {
+        rafId = requestAnimationFrame(renderStep);
+      }
+    }
+
+    rafId = requestAnimationFrame(renderStep);
+  }
+
   function init() {
     if (window.WEDDING_CONFIG) {
+      setupWeddingLoadingScreen(window.WEDDING_CONFIG);
       applyWeddingConfig(window.WEDDING_CONFIG);
     } else {
       fetch('./wedding_config.json')
         .then(function (res) { return res.json(); })
         .then(function (cfg) {
           window.WEDDING_CONFIG = cfg;
+          setupWeddingLoadingScreen(cfg);
           applyWeddingConfig(cfg);
         })
         .catch(function (err) {
@@ -2489,7 +2861,7 @@
 
     // Keep applied even if Framer hydrates, but skip live clock ticking mutations and our own custom UI
     var debounceTimer = null;
-    var ignoreSelector = '.framer-1q8leab, .framer-hofxkl-container, .wedding-inner-card, .wedding-card-bg-texture, .wedding-card-bg-gradient, .wedding-event-grid, .wedding-photo-shell, .wedding-fade-up, .wedding-fade, .wedding-invitation-stage, .framer-uuu3on-container, #weddingCountdownTimerWrap, #wedding-countdown-venues, #wedding-music-widget, #weddingRSVPModal, #weddingRSVPStage, #weddingInstagramStage, #weddingAutoScrollFab';
+    var ignoreSelector = '.framer-1q8leab, .framer-hofxkl-container, .wedding-inner-card, .wedding-card-bg-texture, .wedding-card-bg-gradient, .wedding-event-grid, .wedding-photo-shell, .wedding-fade-up, .wedding-fade, .wedding-invitation-stage, .framer-uuu3on-container, #weddingCountdownTimerWrap, #wedding-countdown-venues, #wedding-music-widget, #weddingRSVPModal, #weddingRSVPStage, #weddingInstagramStage, #weddingAutoScrollFab, #weddingLoadingScreen';
 
     var observer = new MutationObserver(function (mutations) {
       if (isApplyingConfig) return;

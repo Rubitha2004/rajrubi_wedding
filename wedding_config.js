@@ -104,7 +104,7 @@ window.WEDDING_CONFIG = {
   },
   "events_auto_scroll": {
     "enabled": true,
-    "interval_seconds": 4,
+    "interval_seconds": 2,
     "pause_on_hover": true
   },
   "cinematic_reveals": {
@@ -113,5 +113,11 @@ window.WEDDING_CONFIG = {
     "delay_seconds": 0.6,
     "distance_pixels": 32,
     "stagger_seconds": 0.12
+  },
+  "loading_screen": {
+    "enabled": true,
+    "min_duration_seconds": 1.2,
+    "max_duration_seconds": 5.0,
+    "auto_dismiss_delay_ms": 600
   }
 };
