@@ -19,7 +19,10 @@ Wedding/
 ├── demo.html               <-- Preview page
 ├── wedding_config.json     <-- Wedding data config
 ├── wedding_config.js       <-- Compiled JS config
-├── Insecurities.mp3        <-- Wedding background music
+├── music/                  <-- Dedicated audio folder (playlists with crossfade)
+│   ├── Insecurities.mp3
+│   ├── song2.mp3
+│   └── song3.mp3
 ├── murugan_image.png       <-- Deity portrait
 └── assets/                 <-- ALL fonts, images, scripts, icons (upload this entire folder)
     ├── images/
@@ -62,7 +65,7 @@ The invitation page uses one stable central content frame for phone, tablet, and
 ## Built-In Features
 1. **100% Self-Contained**: Zero external CDN calls to `external CDN servers` or `external tracking`.
 2. **Standard Web Server Structure**: `index.html` root entrypoint with organized `assets/` directory.
-3. **Floating Music & Speed Capsule**: Minimizable audio controller with 1x / 2x speed switching that does not interrupt auto-scroll.
+3. **Floating Music & Speed Capsule**: Minimizable audio controller with shuffled playlist support, smooth equal-power crossfade mixing between songs, track navigation, and 1x / 2x speed switching that does not interrupt auto-scroll.
 4. **Cinematic Auto-Scroll**: Smooth slow auto-scroll that pauses on user touch/scroll and resumes automatically.
 5. **Live Interactive Countdown & Dual Venues**: Ticking live countdown timer and venue location cards.
 6. **Direct WhatsApp RSVP**: Pre-fills a personalized RSVP message directly to your phone number.

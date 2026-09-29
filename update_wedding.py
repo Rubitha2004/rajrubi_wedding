@@ -333,7 +333,9 @@ def update_html_file(html_path, config):
 
     # Audio element replacement (Music)
     music = config.get("music", {})
-    music_file = music.get("file", "./Insecurities.mp3")
+    playlist = music.get("playlist", [])
+    first_track = playlist[0] if playlist else {}
+    music_file = first_track.get("file") or music.get("file", "./music/Insecurities.mp3")
     html = re.sub(
         r'(<audio\s+[^>]*src=")[^"]*(")',
         group_replacement(music_file, attribute=True),
@@ -471,7 +473,7 @@ def update_html_file(html_path, config):
     runtime_assets = (
         '\t<link rel="stylesheet" href="./assets/css/wedding_rsvp.css">\n'
         '\t<script src="./wedding_config.js"></script>\n'
-        '\t<script src="./assets/js/wedding_loader.js?v=21"></script>\n'
+        '\t<script src="./assets/js/wedding_loader.js?v=24"></script>\n'
     )
     if './wedding_config.js' not in html:
         head_pos = html.find('</head>')
@@ -487,11 +489,11 @@ def update_html_file(html_path, config):
             end_idx = html.find('</script>', idx)
             if end_idx != -1:
                 end_idx += len('</script>')
-                html = html[:end_idx] + '\n\t<script src="./assets/js/wedding_loader.js?v=21"></script>' + html[end_idx:]
+                html = html[:end_idx] + '\n\t<script src="./assets/js/wedding_loader.js?v=24"></script>' + html[end_idx:]
 
     html = re.sub(
         r'(<script src="\./assets/js/wedding_loader\.js)(?:\?v=\d+)?(")',
-        r'\1?v=21\2',
+        r'\1?v=24\2',
         html
     )
 
@@ -541,8 +543,11 @@ def main():
     ev_venue = first_event.get("venue", "TAJ HOTEL")
 
     music = config.get("music", {})
-    music_title = music.get("title", "Insecurities")
-    music_file = music.get("file", "./Insecurities.mp3")
+    playlist = music.get("playlist", [])
+    first_track = playlist[0] if playlist else {}
+    music_title = first_track.get("title") or music.get("title", "Insecurities")
+    music_file = first_track.get("file") or music.get("file", "./music/Insecurities.mp3")
+    playlist_info = f" ({len(playlist)} tracks)" if playlist else ""
 
     print("\n✓ Successfully updated templates:")
     for uf in updated_files:
@@ -552,7 +557,7 @@ def main():
     print(f"  • Couple: {groom} & {bride}")
     print(f"  • Title: {site_title}")
     print(f"  • Hashtag: {hashtag}")
-    print(f"  • Music: {music_title} ({music_file})")
+    print(f"  • Music: {music_title} ({music_file}){playlist_info}")
     print(f"  • Primary Event: {ev_title} on {ev_date} at {ev_venue}")
 
 if __name__ == "__main__":

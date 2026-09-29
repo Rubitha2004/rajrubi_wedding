@@ -73,8 +73,26 @@
     "target_date": "2026-10-25T06:30:00+05:30"
   },
   "music": {
-    "title": "Insecurities",
-    "file": "./Insecurities.mp3",
+    "playlist": [
+      {
+        "title": "Insecurities",
+        "file": "./music/Insecurities.mp3"
+      },
+      {
+        "title": "Rathinamo(Female Version)",
+        "file": "./music/Rathinamo_(Female_Version)_[cut_35sec].mp3"
+      },
+      {
+        "title": "She Is Like My Mom",
+        "file": "./music/She_Is_Like_My_Mom.mp3"
+      },
+      {
+        "title": "Red Velvet",
+        "file": "./music/Red-Velvet.mp3"
+      }
+    ],
+    "shuffle": true,
+    "crossfade_seconds": 3,
     "autoplay": true,
     "delay_seconds": 2
   },
@@ -86,7 +104,7 @@
   },
   "events_auto_scroll": {
     "enabled": true,
-    "interval_seconds": 4,
+    "interval_seconds": 2,
     "pause_on_hover": true
   },
   "cinematic_reveals": {

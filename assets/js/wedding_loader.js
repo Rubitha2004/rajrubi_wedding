@@ -1082,9 +1082,7 @@
   }
 
   function setupWeddingMusicPlayer(config) {
-    var musicConfig = (config && config.music) ? config.music : { file: './Insecurities.mp3', title: 'Insecurities' };
-    var musicFile = musicConfig.file || './Insecurities.mp3';
-    var musicTitle = musicConfig.title || 'Insecurities';
+    var musicConfig = (config && config.music) ? config.music : {};
 
     // 1. Permanently silence and hide Framer's default/SSR music container
     var framerContainers = document.querySelectorAll('.framer-fwz7u-container');
@@ -1276,6 +1274,9 @@
         #wedding-music-widget.is-playing #wedding-music-bars .eq-bar.b3 {\
           animation: eqBounce3 0.9s infinite ease-in-out;\
         }\
+        #wedding-prev-track,\
+        #wedding-next-track,\
+        #wedding-shuffle-toggle,\
         #wedding-mute-toggle {\
           background: transparent;\
           border: none;\
@@ -1286,14 +1287,40 @@
           justify-content: center;\
           color: rgb(88, 11, 26);\
           opacity: 0.65;\
-          transition: opacity 0.2s ease, transform 0.2s ease;\
+          transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, color 0.2s ease;\
           outline: none;\
           border-radius: 50%;\
           flex-shrink: 0;\
         }\
+        #wedding-prev-track:hover,\
+        #wedding-next-track:hover,\
+        #wedding-shuffle-toggle:hover,\
         #wedding-mute-toggle:hover {\
           opacity: 1;\
+          background: rgba(205, 174, 128, 0.22);\
           transform: scale(1.15);\
+        }\
+        #wedding-shuffle-toggle.is-active {\
+          opacity: 1;\
+          color: rgb(185, 120, 45);\
+          background: rgba(205, 174, 128, 0.28);\
+        }\
+        #wedding-music-label {\
+          font-size: 13px;\
+          font-weight: 600;\
+          color: rgb(88, 11, 26);\
+          letter-spacing: 0.01em;\
+          white-space: nowrap;\
+          max-width: 130px;\
+          overflow: hidden;\
+          text-overflow: ellipsis;\
+          display: inline-block;\
+          vertical-align: middle;\
+          transition: opacity 0.25s ease, transform 0.25s ease;\
+        }\
+        #wedding-music-label.is-transitioning {\
+          opacity: 0;\
+          transform: translateY(-4px);\
         }\
         .wedding-widget-divider {\
           width: 1px;\
@@ -1395,47 +1422,178 @@
         }\
         @media (max-width: 600px) {\
           #wedding-music-widget {\
-            bottom: 14px;\
-            left: 12px;\
+            bottom: 12px;\
+            left: 10px;\
             right: auto;\
-            max-width: calc(100vw - 24px);\
+            max-width: calc(100vw - 20px);\
+            padding: 0 4px 0 0;\
           }\
           #wedding-play-toggle {\
-            width: 46px;\
-            height: 46px;\
-            border-radius: 23px;\
+            width: 44px;\
+            height: 44px;\
+            border-radius: 22px;\
+          }\
+          #wedding-widget-body {\
+            gap: 2px;\
           }\
           #wedding-music-label {\
-            max-width: 80px;\
+            max-width: 75px;\
+            font-size: 11px;\
+          }\
+          .wedding-speed-label {\
+            display: none;\
+          }\
+          #wedding-prev-track,\
+          #wedding-next-track,\
+          #wedding-shuffle-toggle,\
+          #wedding-mute-toggle {\
+            padding: 4px;\
           }\
         }\
       ';
       document.head.appendChild(st);
     }
 
-    // 3. Create or retrieve audio element
-    var audio = document.getElementById('wedding-custom-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'wedding-custom-audio';
-      audio.loop = true;
-      audio.preload = 'auto';
-      audio.src = musicFile;
-      document.body.appendChild(audio);
-    } else if (audio.getAttribute('src') !== musicFile) {
-      var wasPlaying = !audio.paused;
-      audio.src = musicFile;
-      if (wasPlaying) {
-        audio.play().catch(function () { });
+    // 3. Normalize playlist from configuration
+    function parsePlaylist(cfg) {
+      var list = [];
+      if (cfg && Array.isArray(cfg.playlist) && cfg.playlist.length > 0) {
+        list = cfg.playlist.filter(function (it) {
+          return it && (it.file || it.url || it.src);
+        }).map(function (it) {
+          return {
+            title: it.title || 'Wedding Music',
+            file: it.file || it.url || it.src
+          };
+        });
+      } else if (cfg && cfg.file) {
+        list = [{
+          title: cfg.title || 'Insecurities',
+          file: cfg.file
+        }];
       }
+      if (list.length === 0) {
+        list = [{
+          title: 'Insecurities',
+          file: './music/Insecurities.mp3'
+        }];
+      }
+      return list;
     }
 
-    // 4. Create or update UI widget
+    var playlist = parsePlaylist(musicConfig);
+    var crossfadeSec = (typeof musicConfig.crossfade_seconds === 'number' && musicConfig.crossfade_seconds >= 0)
+      ? musicConfig.crossfade_seconds
+      : 3;
+    var shuffleEnabled = (musicConfig.shuffle !== false);
+
+    // If player singleton already exists, update config and return
+    if (window.__weddingMusicPlayer) {
+      window.__weddingMusicPlayer.updateConfig({
+        playlist: playlist,
+        crossfade_seconds: crossfadeSec,
+        shuffle: shuffleEnabled,
+        autoplay: musicConfig.autoplay,
+        delay_seconds: musicConfig.delay_seconds
+      });
+      return;
+    }
+
+    // 4. Dual-Deck Audio Elements (Deck A & Deck B for seamless crossfading)
+    var deckA = document.getElementById('wedding-custom-audio');
+    if (!deckA) {
+      deckA = document.createElement('audio');
+      deckA.id = 'wedding-custom-audio';
+      deckA.preload = 'auto';
+      document.body.appendChild(deckA);
+    }
+    deckA.loop = false;
+
+    var deckB = document.getElementById('wedding-custom-audio-b');
+    if (!deckB) {
+      deckB = document.createElement('audio');
+      deckB.id = 'wedding-custom-audio-b';
+      deckB.preload = 'auto';
+      document.body.appendChild(deckB);
+    }
+    deckB.loop = false;
+    deckB.volume = 0;
+
+    var activeDeck = deckA;
+    var standbyDeck = deckB;
+    var isPlaying = false;
+    var isMuted = false;
+    var masterVolume = 1.0;
+    var isCrossfading = false;
+    var crossfadeTriggered = false;
+    var crossfadeRaf = null;
+
+    // Queue management with Fisher-Yates shuffle
+    function buildQueue(shuffle, firstIdx) {
+      var arr = [];
+      for (var i = 0; i < playlist.length; i++) {
+        arr.push(i);
+      }
+      if (!shuffle || arr.length <= 1) {
+        return arr;
+      }
+      for (var j = arr.length - 1; j > 0; j--) {
+        var k = Math.floor(Math.random() * (j + 1));
+        var tmp = arr[j];
+        arr[j] = arr[k];
+        arr[k] = tmp;
+      }
+      if (typeof firstIdx === 'number') {
+        var pos = arr.indexOf(firstIdx);
+        if (pos > 0) {
+          arr.splice(pos, 1);
+          arr.unshift(firstIdx);
+        }
+      }
+      return arr;
+    }
+
+    var playbackQueue = buildQueue(shuffleEnabled);
+    var currentQueueIndex = 0;
+
+    function getNextQueueIndex(cur) {
+      if (cur + 1 < playbackQueue.length) {
+        return cur + 1;
+      }
+      if (shuffleEnabled) {
+        var lastSongIdx = playbackQueue[cur];
+        playbackQueue = buildQueue(true, null);
+        if (playbackQueue.length > 1 && playbackQueue[0] === lastSongIdx) {
+          var swapIdx = Math.floor(Math.random() * (playbackQueue.length - 1)) + 1;
+          var t = playbackQueue[0];
+          playbackQueue[0] = playbackQueue[swapIdx];
+          playbackQueue[swapIdx] = t;
+        }
+      }
+      return 0;
+    }
+
+    function getPrevQueueIndex(cur) {
+      if (cur - 1 >= 0) {
+        return cur - 1;
+      }
+      return playbackQueue.length - 1;
+    }
+
+    function getCurrentTrack() {
+      return playlist[playbackQueue[currentQueueIndex]] || playlist[0];
+    }
+
+    // 5. SVG Icons
     var playSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" style="margin-left:2px"><path d="M8 5v14l11-7z"/></svg>';
     var pauseSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
     var soundOnSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
     var soundOffSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+    var prevSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>';
+    var nextSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>';
+    var shuffleSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>';
 
+    // 6. Create UI Widget
     var widget = document.getElementById('wedding-music-widget');
     if (widget && !document.getElementById('wedding-widget-body')) {
       widget.parentNode.removeChild(widget);
@@ -1448,19 +1606,29 @@
       widget.setAttribute('role', 'region');
       widget.setAttribute('aria-label', 'Wedding Music & Scroll Controls');
 
+      var curTrack = getCurrentTrack();
       widget.innerHTML = '\
         <button id="wedding-play-toggle" aria-label="Play Music" title="Play Music">\
           ' + playSvg + '\
         </button>\
         <div id="wedding-widget-body">\
+          <button id="wedding-prev-track" aria-label="Previous Song" title="Previous Song">\
+            ' + prevSvg + '\
+          </button>\
           <div id="wedding-music-info" title="Toggle Play / Pause">\
-            <span id="wedding-music-label" style="font-size:13px;font-weight:600;color:rgb(88,11,26);letter-spacing:0.01em;white-space:nowrap;">🎵 ' + escapeHtml(musicTitle) + '</span>\
+            <span id="wedding-music-label" title="' + escapeHtml(curTrack.title) + '">🎵 ' + escapeHtml(curTrack.title) + '</span>\
             <div id="wedding-music-bars">\
               <span class="eq-bar b1"></span>\
               <span class="eq-bar b2"></span>\
               <span class="eq-bar b3"></span>\
             </div>\
           </div>\
+          <button id="wedding-next-track" aria-label="Next Song" title="Next Song">\
+            ' + nextSvg + '\
+          </button>\
+          <button id="wedding-shuffle-toggle" class="' + (shuffleEnabled ? 'is-active' : '') + '" aria-label="Toggle Shuffle" title="Shuffle: ' + (shuffleEnabled ? 'On' : 'Off') + '">\
+            ' + shuffleSvg + '\
+          </button>\
           <button id="wedding-mute-toggle" aria-label="Mute / Unmute" title="Mute / Unmute">\
             ' + soundOnSvg + '\
           </button>\
@@ -1481,165 +1649,433 @@
         </button>\
       ';
       document.body.appendChild(widget);
+    }
 
-      function updatePlayState(isPlaying) {
-        var btn = document.getElementById('wedding-play-toggle');
-        if (btn) {
-          btn.innerHTML = isPlaying ? pauseSvg : playSvg;
-          btn.setAttribute('aria-label', isPlaying ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
-          btn.setAttribute('title', isPlaying ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
-        }
-        if (isPlaying) {
+    // 7. UI State Sync
+    function updatePlayState(playing) {
+      isPlaying = playing;
+      var btn = document.getElementById('wedding-play-toggle');
+      if (btn) {
+        btn.innerHTML = playing ? pauseSvg : playSvg;
+        btn.setAttribute('aria-label', playing ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
+        btn.setAttribute('title', playing ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
+      }
+      if (widget) {
+        if (playing) {
           widget.classList.add('is-playing');
         } else {
           widget.classList.remove('is-playing');
         }
       }
+    }
 
-      function updateMuteState(isMuted) {
-        var muteBtn = document.getElementById('wedding-mute-toggle');
-        if (muteBtn) {
-          muteBtn.innerHTML = isMuted ? soundOffSvg : soundOnSvg;
-          muteBtn.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
-          muteBtn.setAttribute('title', isMuted ? 'Unmute' : 'Mute');
+    function updateMuteState(muted) {
+      isMuted = muted;
+      deckA.muted = muted;
+      deckB.muted = muted;
+      var muteBtn = document.getElementById('wedding-mute-toggle');
+      if (muteBtn) {
+        muteBtn.innerHTML = muted ? soundOffSvg : soundOnSvg;
+        muteBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+        muteBtn.setAttribute('title', muted ? 'Unmute' : 'Mute');
+      }
+    }
+
+    function updateTrackLabel(title) {
+      var label = document.getElementById('wedding-music-label');
+      if (!label) return;
+      label.classList.add('is-transitioning');
+      setTimeout(function () {
+        label.textContent = '🎵 ' + title;
+        label.title = title;
+        label.classList.remove('is-transitioning');
+      }, 150);
+    }
+
+    function updateShuffleBtn() {
+      var sBtn = document.getElementById('wedding-shuffle-toggle');
+      if (!sBtn) return;
+      if (shuffleEnabled) {
+        sBtn.classList.add('is-active');
+        sBtn.title = 'Shuffle: On';
+        sBtn.setAttribute('aria-label', 'Shuffle: On');
+      } else {
+        sBtn.classList.remove('is-active');
+        sBtn.title = 'Shuffle: Off';
+        sBtn.setAttribute('aria-label', 'Shuffle: Off');
+      }
+    }
+
+    // Preload standby deck
+    function preloadStandby() {
+      var nextIdx = getNextQueueIndex(currentQueueIndex);
+      var nextTrack = playlist[playbackQueue[nextIdx]];
+      if (nextTrack && standbyDeck) {
+        if (standbyDeck.getAttribute('src') !== nextTrack.file) {
+          standbyDeck.src = nextTrack.file;
+        }
+        standbyDeck.preload = 'auto';
+        standbyDeck.volume = 0;
+      }
+    }
+
+    // Set initial active deck source
+    var initTrack = getCurrentTrack();
+    if (activeDeck.getAttribute('src') !== initTrack.file) {
+      activeDeck.src = initTrack.file;
+      activeDeck.volume = isMuted ? 0 : masterVolume;
+    }
+    preloadStandby();
+
+    // 8. Equal-Power Crossfade Engine
+    function crossfadeTo(nextQIndex, durationSec) {
+      if (isCrossfading) {
+        if (crossfadeRaf) cancelAnimationFrame(crossfadeRaf);
+        isCrossfading = false;
+        try {
+          standbyDeck.pause();
+          standbyDeck.currentTime = 0;
+          standbyDeck.volume = 0;
+        } catch (e) { }
+      }
+
+      var nextTrack = playlist[playbackQueue[nextQIndex]];
+      if (!nextTrack) return;
+
+      var dur = (typeof durationSec === 'number' && durationSec > 0) ? durationSec : crossfadeSec;
+
+      if (dur <= 0.05 || !isPlaying) {
+        currentQueueIndex = nextQIndex;
+        activeDeck.src = nextTrack.file;
+        activeDeck.currentTime = 0;
+        activeDeck.volume = isMuted ? 0 : masterVolume;
+        updateTrackLabel(nextTrack.title);
+        if (isPlaying) {
+          activeDeck.play().catch(function () { });
+        }
+        crossfadeTriggered = false;
+        preloadStandby();
+        return;
+      }
+
+      isCrossfading = true;
+      crossfadeTriggered = true;
+
+      var outgoing = activeDeck;
+      var incoming = standbyDeck;
+
+      if (incoming.getAttribute('src') !== nextTrack.file) {
+        incoming.src = nextTrack.file;
+      }
+      incoming.currentTime = 0;
+      incoming.volume = 0;
+      incoming.muted = isMuted;
+
+      var playProm = incoming.play();
+      if (playProm !== undefined) {
+        playProm.catch(function (err) {
+          console.warn('Crossfade incoming play error:', err);
+        });
+      }
+
+      updateTrackLabel(nextTrack.title);
+
+      var startTime = performance.now();
+      var durMs = dur * 1000;
+
+      function step(now) {
+        var elapsed = now - startTime;
+        var progress = Math.min(1, Math.max(0, elapsed / durMs));
+
+        // Equal-power crossfade curve: cos(t * pi/2) and sin(t * pi/2)
+        var outGain = Math.cos(progress * 0.5 * Math.PI);
+        var inGain = Math.sin(progress * 0.5 * Math.PI);
+
+        var base = isMuted ? 0 : masterVolume;
+        try {
+          outgoing.volume = Math.max(0, Math.min(1, base * outGain));
+        } catch (e) { }
+        try {
+          incoming.volume = Math.max(0, Math.min(1, base * inGain));
+        } catch (e) { }
+
+        if (progress < 1) {
+          crossfadeRaf = requestAnimationFrame(step);
+        } else {
+          isCrossfading = false;
+          try {
+            outgoing.pause();
+            outgoing.currentTime = 0;
+            outgoing.volume = 0;
+          } catch (e) { }
+          incoming.volume = isMuted ? 0 : masterVolume;
+
+          // Swap active & standby decks
+          activeDeck = incoming;
+          standbyDeck = outgoing;
+          currentQueueIndex = nextQIndex;
+          crossfadeTriggered = false;
+
+          preloadStandby();
         }
       }
 
-      function handlePlayToggle(e) {
+      crossfadeRaf = requestAnimationFrame(step);
+    }
+
+    // Natural end & crossfade monitoring
+    function checkAutoCrossfade() {
+      if (!isPlaying || isCrossfading || crossfadeTriggered) return;
+      if (!activeDeck.duration || isNaN(activeDeck.duration)) return;
+
+      var remaining = activeDeck.duration - activeDeck.currentTime;
+      if (remaining <= crossfadeSec && remaining > 0) {
+        crossfadeTriggered = true;
+        var nextIdx = getNextQueueIndex(currentQueueIndex);
+        var dur = (remaining >= 1) ? Math.min(crossfadeSec, remaining) : remaining;
+        crossfadeTo(nextIdx, dur);
+      }
+    }
+
+    deckA.addEventListener('timeupdate', checkAutoCrossfade);
+    deckB.addEventListener('timeupdate', checkAutoCrossfade);
+
+    setInterval(checkAutoCrossfade, 250);
+
+    function onDeckEnded() {
+      if (!isCrossfading) {
+        var nextIdx = getNextQueueIndex(currentQueueIndex);
+        crossfadeTo(nextIdx, 1);
+      }
+    }
+    deckA.addEventListener('ended', onDeckEnded);
+    deckB.addEventListener('ended', onDeckEnded);
+
+    function onDeckError(e) {
+      var d = e.target;
+      console.warn('Audio deck load error:', d ? d.src : '');
+      if (d === activeDeck && isPlaying) {
+        setTimeout(function () {
+          var nextIdx = getNextQueueIndex(currentQueueIndex);
+          crossfadeTo(nextIdx, 0.5);
+        }, 500);
+      }
+    }
+    deckA.addEventListener('error', onDeckError);
+    deckB.addEventListener('error', onDeckError);
+
+    // 9. Player Controller API
+    var player = {
+      play: function () {
+        var p = activeDeck.play();
+        if (p !== undefined) {
+          p.then(function () {
+            updatePlayState(true);
+            if (isCrossfading) {
+              standbyDeck.play().catch(function () { });
+            }
+          }).catch(function (err) {
+            console.warn('Audio play prevented:', err);
+            updatePlayState(false);
+          });
+        } else {
+          updatePlayState(true);
+        }
+        if (window.__weddingResumeAutoScroll) {
+          window.__weddingResumeAutoScroll();
+        }
+      },
+      pause: function () {
+        activeDeck.pause();
+        if (isCrossfading) {
+          standbyDeck.pause();
+        }
+        updatePlayState(false);
+        if (window.__weddingPauseAutoScroll) {
+          window.__weddingPauseAutoScroll();
+        }
+      },
+      togglePlay: function () {
+        if (isPlaying) {
+          player.pause();
+        } else {
+          player.play();
+        }
+      },
+      next: function () {
+        if (playlist.length <= 1 && !isPlaying) return;
+        var nextIdx = getNextQueueIndex(currentQueueIndex);
+        if (isPlaying) {
+          crossfadeTo(nextIdx, Math.min(1.5, crossfadeSec));
+        } else {
+          crossfadeTo(nextIdx, 0);
+        }
+      },
+      prev: function () {
+        if (activeDeck.currentTime > 3) {
+          activeDeck.currentTime = 0;
+          return;
+        }
+        var prevIdx = getPrevQueueIndex(currentQueueIndex);
+        if (isPlaying) {
+          crossfadeTo(prevIdx, Math.min(1.5, crossfadeSec));
+        } else {
+          crossfadeTo(prevIdx, 0);
+        }
+      },
+      toggleShuffle: function () {
+        shuffleEnabled = !shuffleEnabled;
+        updateShuffleBtn();
+        var curSongIdx = playbackQueue[currentQueueIndex];
+        if (shuffleEnabled) {
+          playbackQueue = buildQueue(true, curSongIdx);
+          currentQueueIndex = 0;
+        } else {
+          playbackQueue = buildQueue(false);
+          currentQueueIndex = playbackQueue.indexOf(curSongIdx);
+          if (currentQueueIndex === -1) currentQueueIndex = 0;
+        }
+        preloadStandby();
+      },
+      toggleMute: function () {
+        updateMuteState(!isMuted);
+      },
+      updateConfig: function (newCfg) {
+        if (!newCfg) return;
+        if (newCfg.playlist && Array.isArray(newCfg.playlist) && newCfg.playlist.length > 0) {
+          playlist = parsePlaylist(newCfg);
+          var curSongIdx = playbackQueue[currentQueueIndex] || 0;
+          playbackQueue = buildQueue(shuffleEnabled, curSongIdx);
+          currentQueueIndex = 0;
+          preloadStandby();
+        }
+        if (typeof newCfg.crossfade_seconds === 'number') {
+          crossfadeSec = newCfg.crossfade_seconds;
+        }
+        if (typeof newCfg.shuffle === 'boolean') {
+          shuffleEnabled = newCfg.shuffle;
+          updateShuffleBtn();
+        }
+      }
+    };
+
+    window.__weddingMusicPlayer = player;
+
+    // 10. Wire UI Click Handlers
+    var playBtn = document.getElementById('wedding-play-toggle');
+    if (playBtn) {
+      playBtn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.togglePlay();
+      };
+    }
+
+    var infoDiv = document.getElementById('wedding-music-info');
+    if (infoDiv) {
+      infoDiv.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.togglePlay();
+      };
+    }
+
+    var prevBtn = document.getElementById('wedding-prev-track');
+    if (prevBtn) {
+      prevBtn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.prev();
+      };
+    }
+
+    var nextBtn = document.getElementById('wedding-next-track');
+    if (nextBtn) {
+      nextBtn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.next();
+      };
+    }
+
+    var shuffleBtn = document.getElementById('wedding-shuffle-toggle');
+    if (shuffleBtn) {
+      shuffleBtn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.toggleShuffle();
+      };
+    }
+
+    var muteBtn = document.getElementById('wedding-mute-toggle');
+    if (muteBtn) {
+      muteBtn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        player.toggleMute();
+      };
+    }
+
+    // Speed buttons handlers
+    var speedBtns = widget.querySelectorAll('.wedding-speed-btn');
+    speedBtns.forEach(function (btn) {
+      btn.onclick = function (e) {
         if (e) {
           e.preventDefault();
           e.stopPropagation();
         }
-        var isPlaying = !audio.paused;
-        if (isPlaying) {
-          // Pause both music and auto-scroll
-          audio.pause();
-          updatePlayState(false);
-          if (window.__weddingPauseAutoScroll) {
-            window.__weddingPauseAutoScroll();
-          }
-        } else {
-          // Play both music and auto-scroll
-          var p = audio.play();
-          if (p !== undefined) {
-            p.then(function () {
-              updatePlayState(true);
-            }).catch(function (err) {
-              console.warn('Audio play prevented:', err);
-              updatePlayState(false);
-            });
-          } else {
-            updatePlayState(true);
-          }
-          if (window.__weddingResumeAutoScroll) {
-            window.__weddingResumeAutoScroll();
-          }
+        var sp = parseFloat(btn.getAttribute('data-speed')) || 1;
+        speedBtns.forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        if (window.__weddingSetScrollSpeed) {
+          window.__weddingSetScrollSpeed(sp);
         }
-      }
+      };
+    });
 
-      // Play toggle handlers
-      var playBtn = document.getElementById('wedding-play-toggle');
-      if (playBtn) playBtn.onclick = handlePlayToggle;
-
-      var infoDiv = document.getElementById('wedding-music-info');
-      if (infoDiv) infoDiv.onclick = handlePlayToggle;
-
-      // Mute toggle handler
-      var muteBtn = document.getElementById('wedding-mute-toggle');
-      if (muteBtn) {
-        muteBtn.onclick = function (e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          audio.muted = !audio.muted;
-          updateMuteState(audio.muted);
-        };
-      }
-
-      // Speed buttons handlers
-      var speedBtns = widget.querySelectorAll('.wedding-speed-btn');
-      speedBtns.forEach(function (btn) {
-        btn.onclick = function (e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          var sp = parseFloat(btn.getAttribute('data-speed')) || 1;
-          speedBtns.forEach(function (b) { b.classList.remove('is-active'); });
-          btn.classList.add('is-active');
-          if (window.__weddingSetScrollSpeed) {
-            window.__weddingSetScrollSpeed(sp);
-          }
-        };
-      });
-
-      // Minimize / Expand handlers
-      var minBtn = document.getElementById('wedding-widget-minimize');
-      var expBtn = document.getElementById('wedding-widget-expand');
-      if (minBtn) {
-        minBtn.onclick = function (e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          widget.classList.add('is-minimized');
-          try { sessionStorage.setItem('wedding_widget_minimized', '1'); } catch (err) { }
-        };
-      }
-      if (expBtn) {
-        expBtn.onclick = function (e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          widget.classList.remove('is-minimized');
-          try { sessionStorage.removeItem('wedding_widget_minimized'); } catch (err) { }
-        };
-      }
-
-      try {
-        if (sessionStorage.getItem('wedding_widget_minimized') === '1') {
-          widget.classList.add('is-minimized');
-        }
-      } catch (err) { }
-
-      // Prevent any interactions on the floating menu from bubbling and pausing auto-scroll
-      ['pointerdown', 'pointerup', 'pointermove', 'touchstart', 'touchmove', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(function (ev) {
-        widget.addEventListener(ev, function (e) {
+    // Minimize / Expand handlers
+    var minBtn = document.getElementById('wedding-widget-minimize');
+    var expBtn = document.getElementById('wedding-widget-expand');
+    if (minBtn) {
+      minBtn.onclick = function (e) {
+        if (e) {
+          e.preventDefault();
           e.stopPropagation();
-        });
-      });
-
-      audio.addEventListener('play', function () { updatePlayState(true); });
-      audio.addEventListener('pause', function () { updatePlayState(false); });
-      audio.addEventListener('ended', function () { updatePlayState(false); });
-
-      updatePlayState(!audio.paused);
-      updateMuteState(audio.muted);
-    } else {
-      var label = document.getElementById('wedding-music-label');
-      if (label) label.textContent = '🎵 ' + musicTitle;
+        }
+        widget.classList.add('is-minimized');
+        try { sessionStorage.setItem('wedding_widget_minimized', '1'); } catch (err) { }
+      };
+    }
+    if (expBtn) {
+      expBtn.onclick = function (e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        widget.classList.remove('is-minimized');
+        try { sessionStorage.removeItem('wedding_widget_minimized'); } catch (err) { }
+      };
     }
 
-    // 5. Autoplay song after 2 seconds (or configured delay)
+    try {
+      if (sessionStorage.getItem('wedding_widget_minimized') === '1') {
+        widget.classList.add('is-minimized');
+      }
+    } catch (err) { }
+
+    // Prevent any interactions on the floating menu from bubbling and pausing auto-scroll
+    ['pointerdown', 'pointerup', 'pointermove', 'touchstart', 'touchmove', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(function (ev) {
+      widget.addEventListener(ev, function (e) {
+        e.stopPropagation();
+      });
+    });
+
+    // Initial mute and play states
+    updateMuteState(isMuted);
+    updatePlayState(false);
+
+    // 11. Autoplay with Graceful Browser Policy Handling
     if (musicConfig.autoplay !== false && !window.__weddingMusicAutoplayInitiated) {
       window.__weddingMusicAutoplayInitiated = true;
       var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
 
       var triggerMusicPlayback = function () {
-        if (audio && audio.paused) {
-          var p = audio.play();
-          if (p !== undefined) {
-            p.then(function () {
-              var btn = document.getElementById('wedding-play-toggle');
-              if (btn) btn.innerHTML = pauseSvg;
-              var w = document.getElementById('wedding-music-widget');
-              if (w) w.classList.add('is-playing');
-            }).catch(function (err) {
-              console.log('Autoplay deferred until first user interaction:', err ? err.message : '');
-            });
-          }
+        if (!isPlaying) {
+          player.play();
         }
       };
 
@@ -1676,21 +2112,26 @@
     var lastTime = null;
     var currentMultiplier = 1;
     var isLoopRunning = false;
-    var cachedTargetStop = null;
     var isManuallyPaused = false;
+    var hasReachedTarget = false;
 
     function getTargetStop() {
-      if (cachedTargetStop !== null) return cachedTargetStop;
       var docH = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
       var winH = window.innerHeight || 0;
       var maxScroll = Math.max(0, docH - winH);
-      cachedTargetStop = maxScroll;
-      return cachedTargetStop;
-    }
 
-    window.addEventListener('resize', function () {
-      cachedTargetStop = null;
-    }, { passive: true });
+      // Dedicated target stop: Stop precisely at the Countdown & Locations Section (.framer-s1eh8d)
+      var countdownEl = document.querySelector('.framer-s1eh8d') ||
+                        document.getElementById('wedding-countdown-venues') ||
+                        document.querySelector('[data-framer-name="COUNTING THE DAYS"]');
+      if (countdownEl) {
+        var rect = countdownEl.getBoundingClientRect();
+        var currentY = window.scrollY || window.pageYOffset || 0;
+        var countdownTop = rect.top + currentY;
+        return Math.min(maxScroll, Math.max(0, Math.round(countdownTop)));
+      }
+      return maxScroll;
+    }
 
     window.__weddingPauseAutoScroll = function () {
       isManuallyPaused = true;
@@ -1710,7 +2151,8 @@
       }
       scrollPos = window.scrollY || window.pageYOffset || 0;
       var targetStop = getTargetStop();
-      if (scrollPos < targetStop - 5) {
+      // Only resume if we have NOT yet arrived at the countdown section
+      if (!hasReachedTarget && scrollPos < targetStop - 15) {
         autoScrollActive = true;
         if (!isLoopRunning) {
           isLoopRunning = true;
@@ -1721,17 +2163,20 @@
     };
 
     window.__weddingIsAutoScrollActive = function () {
-      return autoScrollActive && !isManuallyPaused;
+      return autoScrollActive && !isManuallyPaused && !hasReachedTarget;
     };
 
     window.__weddingSetScrollSpeed = function (multiplier) {
       currentMultiplier = multiplier;
       userInteracting = false;
-      cachedTargetStop = null;
       if (resumeTimer) clearTimeout(resumeTimer);
 
+      var currentY = window.scrollY || window.pageYOffset || 0;
       var targetStop = getTargetStop();
-      if (window.scrollY < targetStop - 10) {
+
+      // Only auto-scroll if user is currently above the countdown section
+      if (currentY < targetStop - 25) {
+        hasReachedTarget = false;
         isManuallyPaused = false;
         autoScrollActive = true;
         if (!isLoopRunning) {
@@ -1757,24 +2202,41 @@
           }
         }
       }
-      if (isManuallyPaused) {
-        userInteracting = true;
-        scrollPos = window.scrollY || window.pageYOffset || 0;
+
+      scrollPos = window.scrollY || window.pageYOffset || 0;
+      var currentTarget = getTargetStop();
+
+      // If user manually scrolls significantly back UP towards the top, allow auto-scroll down to countdown again
+      if (scrollPos < currentTarget - 120) {
+        hasReachedTarget = false;
+      } else if (scrollPos >= currentTarget - 15) {
+        // User has reached or passed the countdown section; keep auto-scroll stopped permanently
+        hasReachedTarget = true;
+        autoScrollActive = false;
         if (resumeTimer) {
           clearTimeout(resumeTimer);
           resumeTimer = null;
         }
         return;
       }
+
+      if (isManuallyPaused) {
+        userInteracting = true;
+        if (resumeTimer) {
+          clearTimeout(resumeTimer);
+          resumeTimer = null;
+        }
+        return;
+      }
+
       userInteracting = true;
-      scrollPos = window.scrollY || window.pageYOffset || 0;
       if (resumeTimer) clearTimeout(resumeTimer);
       resumeTimer = setTimeout(function () {
         if (isManuallyPaused) return;
         scrollPos = window.scrollY || window.pageYOffset || 0;
         userInteracting = false;
         var targetStop = getTargetStop();
-        if (scrollPos < targetStop - 10 && !isLoopRunning) {
+        if (!hasReachedTarget && scrollPos < targetStop - 15 && !isLoopRunning) {
           autoScrollActive = true;
           isLoopRunning = true;
           lastTime = null;
@@ -1813,9 +2275,16 @@
             window.__weddingScanCinematicReveals();
           }
         } else {
+          // Arrived precisely at the Countdown & Locations section
           scrollPos = targetStop;
           window.scrollTo(0, scrollPos);
-          autoScrollActive = false; // Reached bottom of document
+          autoScrollActive = false; // Stop permanently at countdown
+          hasReachedTarget = true;
+          isLoopRunning = false;
+          if (resumeTimer) {
+            clearTimeout(resumeTimer);
+            resumeTimer = null;
+          }
           if (window.__weddingScanCinematicReveals) {
             window.__weddingScanCinematicReveals();
           }
@@ -1828,7 +2297,7 @@
         }
       }
 
-      if (autoScrollActive && !isManuallyPaused) {
+      if (autoScrollActive && !isManuallyPaused && !hasReachedTarget) {
         requestAnimationFrame(step);
       } else {
         isLoopRunning = false;
@@ -1839,7 +2308,9 @@
     setTimeout(function () {
       if (isManuallyPaused) return;
       scrollPos = window.scrollY || window.pageYOffset || 0;
-      if (!isLoopRunning) {
+      var targetStop = getTargetStop();
+      if (scrollPos < targetStop - 15 && !isLoopRunning) {
+        hasReachedTarget = false;
         isLoopRunning = true;
         lastTime = null;
         requestAnimationFrame(step);

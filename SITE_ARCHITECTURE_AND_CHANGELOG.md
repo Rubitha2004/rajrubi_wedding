@@ -284,11 +284,14 @@ Below is the complete engineering record of all modifications, refactorings, and
 Wedding/
 ├── index.html                   <-- Primary web server entrypoint (production HTML)
 ├── demo.html                    <-- Preview template
-├── wedding_config.json          <-- Master configuration (names, dates, venues, speeds)
+├── wedding_config.json          <-- Master configuration (names, dates, venues, speeds, playlist)
 ├── wedding_config.js            <-- Compiled JS config loaded by browser
 ├── update_wedding.py            <-- Python synchronization script
 ├── update_wedding.command       <-- macOS one-click launcher
-├── Insecurities.mp3             <-- Wedding background audio file
+├── music/                       <-- Dedicated wedding audio directory (playlist tracks, crossfade audio)
+│   ├── Insecurities.mp3
+│   ├── song2.mp3
+│   └── song3.mp3
 ├── murugan_image.png            <-- Lord Murugan shrine portrait
 ├── README.md                    <-- Quick start & server deployment guide
 ├── SITE_ARCHITECTURE_AND_CHANGELOG.md <-- This comprehensive specification document
@@ -418,3 +421,13 @@ Upload the following files and folders to your server’s public directory (e.g.
 - **AWS S3 / Cloudflare Pages**: Enable static website hosting and upload all files.
 
 Because all paths are strictly relative (`./assets/...`), the website works immediately at any domain root (`https://yourdomain.com/`) or within any sub-directory (`https://yourdomain.com/invitation/`).
+
+---
+
+## 7. Recent Fixes & Enhancements
+
+### Auto-Scroll Countdown Target Stop & Halt Locking
+- **Countdown Target Halt**: Restored target stop boundary calculation to lock precisely at the **Countdown & Locations Section** (`.framer-s1eh8d`).
+- **Halt Permanence**: Added `hasReachedTarget` state lock to ensure that once auto-scroll smoothly glides to the Countdown and Venue cards, it halts permanently and does not resume scrolling down past this critical information.
+- **Interaction & Audio Guard**: User taps, gestures, audio autoplay unlock, and track transitions will no longer trigger resume timers if the page is already at or past the Countdown section.
+- **Scroll-Up Re-engagement**: If a user manually scrolls back up to the top of the invitation to re-read it, the engine gracefully re-enables auto-scroll to guide them back down to the Countdown section.
