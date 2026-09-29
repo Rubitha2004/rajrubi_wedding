@@ -1,6 +1,8 @@
 // Wedding Dynamic Loader
 (function () {
   var currentEventIndex = 0;
+  var currentRenderedEventIdx = -1;
+  var isApplyingConfig = false;
   var countdownInterval = null;
   var taglineFlowSyncInitialized = false;
   var taglineFlowSyncFrame = 0;
@@ -113,8 +115,10 @@
 
   function applyWeddingConfig(config) {
     if (!config) return;
-
-    var couple = config.couple || {};
+    if (isApplyingConfig) return;
+    isApplyingConfig = true;
+    try {
+      var couple = config.couple || {};
     var brideName = couple.bride_name || 'BRIDE';
     var groomName = couple.groom_name || 'GROOM';
     var invitation = config.invitation || {};
@@ -213,17 +217,27 @@
 
     var invitationStage = document.getElementById('weddingInvitationStage');
     var pageTwo = document.querySelector('.framer-gj6wzl');
-    if (!invitationStage && pageTwo) {
-      invitationStage = document.createElement('div');
-      invitationStage.className = 'wedding-invitation-stage';
-      invitationStage.id = 'weddingInvitationStage';
-      invitationStage.innerHTML =
-        '<div class="wis-deity-wrap"><img class="wis-deity-img" alt="Lord Murugan"><div class="wis-mantra" id="wisMantra"></div></div>' +
-        '<div class="wis-invite-wrap"><h1 class="wis-invite-title"></h1></div>' +
-        '<div class="wis-family-block" id="wisFamilyBlock"></div>' +
-        '<div class="wis-couple-wrap"><h2 class="wis-name wis-groom" id="wisGroomName"></h2><span class="wis-amp">&amp;</span><h2 class="wis-name wis-bride" id="wisBrideName"></h2></div>' +
-        '<div class="wis-events-badge" id="wisEventsBadge"><p></p></div>';
-      pageTwo.insertBefore(invitationStage, pageTwo.firstChild);
+    if (pageTwo) {
+      if (!invitationStage || invitationStage.parentElement !== pageTwo) {
+        if (!invitationStage) {
+          invitationStage = document.createElement('div');
+          invitationStage.className = 'wedding-invitation-stage';
+          invitationStage.id = 'weddingInvitationStage';
+          invitationStage.innerHTML =
+            '<div class="wis-deity-wrap"><img class="wis-deity-img" alt="Lord Murugan"><div class="wis-mantra" id="wisMantra"></div></div>' +
+            '<div class="wis-invite-wrap"><h1 class="wis-invite-title"></h1></div>' +
+            '<div class="wis-family-block" id="wisFamilyBlock"></div>' +
+            '<div class="wis-couple-wrap"><h2 class="wis-name wis-groom" id="wisGroomName"></h2><span class="wis-amp">&amp;</span><h2 class="wis-name wis-bride" id="wisBrideName"></h2></div>' +
+            '<div class="wis-events-badge" id="wisEventsBadge"><p></p></div>';
+        }
+        pageTwo.appendChild(invitationStage);
+      }
+    }
+    if (invitationStage) {
+      invitationStage.style.opacity = '1';
+      invitationStage.style.visibility = 'visible';
+      invitationStage.style.transform = 'none';
+      invitationStage.style.pointerEvents = 'auto';
     }
     var stageImage = invitationStage && invitationStage.querySelector('.wis-deity-img');
     if (stageImage) stageImage.src = couple.deity_image || './murugan_image.png';
@@ -295,112 +309,277 @@
 
     // 4. Page 3: Event Slideshow
     var eventsList = config.events || [];
-    var slideshowCouple = document.querySelector('.wedding-event-grid')?.parentElement?.querySelector('span');
-    if (slideshowCouple) {
-      slideshowCouple.textContent = groomName + ' & ' + brideName;
+    document.querySelectorAll('.wedding-event-grid').forEach(function (grid) {
+      var sp = grid.parentElement && grid.parentElement.querySelector('span');
+      if (sp) sp.textContent = groomName + ' & ' + brideName;
+    });
+
+    function resolveEventImage(ev) {
+      if (ev && ev.image) return ev.image;
+      var t = (ev && ev.title ? ev.title : '').toLowerCase();
+      if (t.indexOf('engagement') !== -1) return './assets/images/heritage/event-engagement.jpg';
+      if (t.indexOf('reception') !== -1) return './assets/images/heritage/event-reception.jpg';
+      if (t.indexOf('wedding') !== -1) return './assets/images/heritage/event-wedding.webp';
+      return './assets/images/heritage/event-engagement.jpg';
     }
 
-    function renderSlide(idx) {
+    function renderSlide(idx, force) {
       if (!eventsList.length) return;
-      var ev = eventsList[idx % eventsList.length];
-      var eventH2 = document.querySelector('.wedding-fade-up h2');
-      if (eventH2 && ev.title) setTextContent(eventH2, ev.title);
+      var activeSlideIdx = ((idx % eventsList.length) + eventsList.length) % eventsList.length;
+      var ev = eventsList[activeSlideIdx];
+      var targetImg = resolveEventImage(ev);
+      var isFirstRender = (currentRenderedEventIdx === -1);
+      var isSameSlide = (currentRenderedEventIdx === activeSlideIdx && !force);
 
-      var eventSpans = document.querySelectorAll('.wedding-fade-up div div span:last-child');
-      if (eventSpans.length >= 3) {
-        if (hasOwn(ev, 'date')) setTextContent(eventSpans[0], ev.date || '');
-        if (hasOwn(ev, 'time')) setTextContent(eventSpans[1], ev.time || '');
-        if (hasOwn(ev, 'venue')) setTextContent(eventSpans[2], ev.venue || '');
-      }
+      currentRenderedEventIdx = activeSlideIdx;
 
-      var eventDesc = document.querySelector('.wedding-fade-up > p');
-      if (eventDesc && hasOwn(ev, 'description')) setTextContent(eventDesc, ev.description || '');
+      // Update dot buttons in each photo shell
+      document.querySelectorAll('.wedding-photo-shell').forEach(function (shell) {
+        var dots = shell.querySelectorAll('.wedding-dot-btn');
+        dots.forEach(function (dot, dIdx) {
+          if (dIdx < eventsList.length) {
+            dot.hidden = false;
+            dot.style.display = 'inline-block';
+            if (dIdx === activeSlideIdx) {
+              dot.style.width = '24px';
+              dot.style.background = 'rgb(215, 162, 42)';
+              dot.style.boxShadow = '0 0 8px rgba(215, 162, 42, 0.6)';
+              dot.setAttribute('aria-current', 'true');
+            } else {
+              dot.style.width = '10px';
+              dot.style.background = 'rgba(255,255,255,0.75)';
+              dot.style.boxShadow = 'none';
+              dot.removeAttribute('aria-current');
+            }
+          } else {
+            dot.hidden = true;
+            dot.style.display = 'none';
+          }
+        });
+      });
 
-      var ctaBtn = document.querySelector('.wedding-cta-btn');
-      if (ctaBtn && hasOwn(ev, 'location_url')) {
-        ctaBtn.href = ev.location_url || '#';
-        ctaBtn.target = '_blank';
-      }
+      function updateCardContent(fadeUp) {
+        var eventH2 = fadeUp.querySelector('h2');
+        if (eventH2 && ev.title) setTextContent(eventH2, ev.title);
 
-      // Update dot buttons
-      var dots = document.querySelectorAll('.wedding-dot-btn');
-      dots.forEach(function (dot, dIdx) {
-        if (dIdx === (idx % eventsList.length)) {
-          dot.style.width = '18px';
-          dot.style.background = 'rgb(10, 48, 127)';
-        } else {
-          dot.style.width = '10px';
-          dot.style.background = 'rgba(255,255,255,0.75)';
+        var eventSpans = fadeUp.querySelectorAll('div div span:last-child');
+        if (eventSpans.length >= 3) {
+          if (hasOwn(ev, 'date')) setTextContent(eventSpans[0], ev.date || '');
+          if (hasOwn(ev, 'time')) setTextContent(eventSpans[1], ev.time || '');
+          if (hasOwn(ev, 'venue')) setTextContent(eventSpans[2], ev.venue || '');
         }
+
+        var eventDesc = fadeUp.querySelector('p');
+        if (eventDesc && hasOwn(ev, 'description')) setTextContent(eventDesc, ev.description || '');
+
+        var ctaBtn = fadeUp.querySelector('.wedding-cta-btn');
+        if (ctaBtn && hasOwn(ev, 'location_url')) {
+          ctaBtn.href = ev.location_url || '#';
+          ctaBtn.target = '_blank';
+        }
+      }
+
+      function updatePhoto(img, animate) {
+        img.removeAttribute('srcset');
+        img.style.setProperty('object-fit', 'cover', 'important');
+        img.style.setProperty('object-position', 'center', 'important');
+        img.alt = (ev.title || 'Wedding event') + ' photo';
+
+        var currentSrc = img.getAttribute('src');
+        if (!animate || currentSrc === targetImg) {
+          if (currentSrc !== targetImg) img.src = targetImg;
+          img.style.opacity = '1';
+          return;
+        }
+
+        img.style.transition = 'opacity 200ms ease';
+        img.style.opacity = '0.75';
+        setTimeout(function () {
+          img.src = targetImg;
+          img.style.opacity = '1';
+        }, 120);
+      }
+
+      if (isFirstRender || isSameSlide) {
+        document.querySelectorAll('.wedding-fade-up').forEach(function (fadeUp) {
+          fadeUp.style.opacity = '1';
+          updateCardContent(fadeUp);
+        });
+        document.querySelectorAll('.wedding-photo').forEach(function (img) {
+          updatePhoto(img, false);
+        });
+        return;
+      }
+
+      // Smooth, gentle crossfade for actual slide change (never dips to harsh 0.35)
+      document.querySelectorAll('.wedding-fade-up').forEach(function (fadeUp) {
+        fadeUp.style.transition = 'opacity 180ms ease';
+        fadeUp.style.opacity = '0.75';
+        setTimeout(function () {
+          updateCardContent(fadeUp);
+          fadeUp.style.opacity = '1';
+        }, 120);
+      });
+
+      document.querySelectorAll('.wedding-photo').forEach(function (img) {
+        updatePhoto(img, true);
       });
     }
 
+    // Expose event slide helpers globally
+    window.__weddingRenderEventSlide = renderSlide;
+    window.__weddingGetEventsCount = function () {
+      return eventsList.length;
+    };
+    window.__weddingGetCurrentEventIndex = function () {
+      return currentEventIndex;
+    };
+    window.__weddingSetCurrentEventIndex = function (idx) {
+      if (!eventsList.length) return;
+      currentEventIndex = ((idx % eventsList.length) + eventsList.length) % eventsList.length;
+      renderSlide(currentEventIndex, true);
+      pauseEventAutoScrollTemporarily(6000);
+    };
+
     renderSlide(currentEventIndex);
 
-    // Setup arrow buttons (only attach once)
-    var prevBtn = document.querySelector('.wedding-arrow-btn[aria-label="Previous slide"]');
-    var nextBtn = document.querySelector('.wedding-arrow-btn[aria-label="Next slide"]');
-    if (prevBtn && !prevBtn.dataset.wired) {
-      prevBtn.dataset.wired = 'true';
-      prevBtn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        currentEventIndex = (currentEventIndex - 1 + eventsList.length) % eventsList.length;
-        renderSlide(currentEventIndex);
-      };
-    }
-    if (nextBtn && !nextBtn.dataset.wired) {
-      nextBtn.dataset.wired = 'true';
-      nextBtn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        currentEventIndex = (currentEventIndex + 1) % eventsList.length;
-        renderSlide(currentEventIndex);
-      };
+    // 4.1 Dedicated, Independent Auto-Scroll of Event Slides
+    var isEventCarouselPaused = false;
+    var eventConfig = (config && config.events_auto_scroll) ? config.events_auto_scroll : {};
+    var eventAutoScrollEnabled = (eventConfig.enabled !== false);
+    var eventIntervalSeconds = 4;
+    if (eventConfig.interval_seconds !== undefined) {
+      eventIntervalSeconds = eventConfig.interval_seconds;
+    } else if (config.auto_scroll && config.auto_scroll.event_slide_seconds !== undefined) {
+      eventIntervalSeconds = config.auto_scroll.event_slide_seconds;
     }
 
-    // Setup dots
-    var dots = document.querySelectorAll('.wedding-dot-btn');
-    dots.forEach(function (dot, dIdx) {
-      dot.hidden = dIdx >= eventsList.length;
-    });
-    dots.forEach(function (dot, dIdx) {
-      if (!dot.hidden && !dot.dataset.wired) {
-        dot.dataset.wired = 'true';
-        dot.onclick = function (e) {
+    function advanceEventSlide() {
+      if (eventsList.length <= 1) return;
+      currentEventIndex = (currentEventIndex + 1) % eventsList.length;
+      renderSlide(currentEventIndex);
+    }
+
+    function startEventAutoScroll() {
+      if (window.__weddingEventAutoScrollTimer) {
+        clearInterval(window.__weddingEventAutoScrollTimer);
+        window.__weddingEventAutoScrollTimer = null;
+      }
+      if (!eventAutoScrollEnabled || eventsList.length <= 1) return;
+      var intervalMs = Math.max(2000, Math.round(eventIntervalSeconds * 1000));
+      window.__weddingEventAutoScrollTimer = setInterval(function () {
+        if (!isEventCarouselPaused) {
+          advanceEventSlide();
+        }
+      }, intervalMs);
+    }
+
+    function pauseEventAutoScrollTemporarily(delayMs) {
+      isEventCarouselPaused = true;
+      if (window.__weddingEventAutoScrollResumeTimer) {
+        clearTimeout(window.__weddingEventAutoScrollResumeTimer);
+      }
+      window.__weddingEventAutoScrollResumeTimer = setTimeout(function () {
+        isEventCarouselPaused = false;
+      }, delayMs || 5000);
+    }
+
+    if (eventAutoScrollEnabled && !window.__weddingEventAutoScrollTimer) {
+      startEventAutoScroll();
+    }
+
+    // Setup arrow buttons and dots across all photo shells (desktop & mobile)
+    document.querySelectorAll('.wedding-photo-shell').forEach(function (shell) {
+      var prevBtn = shell.querySelector('.wedding-arrow-btn[aria-label="Previous slide"]');
+      var nextBtn = shell.querySelector('.wedding-arrow-btn[aria-label="Next slide"]');
+      if (prevBtn && !prevBtn.dataset.wired) {
+        prevBtn.dataset.wired = 'true';
+        prevBtn.onclick = function (e) {
           e.preventDefault();
           e.stopPropagation();
-          currentEventIndex = dIdx % eventsList.length;
+          currentEventIndex = (currentEventIndex - 1 + eventsList.length) % eventsList.length;
           renderSlide(currentEventIndex);
+          pauseEventAutoScrollTemporarily(6000);
         };
       }
+      if (nextBtn && !nextBtn.dataset.wired) {
+        nextBtn.dataset.wired = 'true';
+        nextBtn.onclick = function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          currentEventIndex = (currentEventIndex + 1) % eventsList.length;
+          renderSlide(currentEventIndex);
+          pauseEventAutoScrollTemporarily(6000);
+        };
+      }
+
+      var shellDots = shell.querySelectorAll('.wedding-dot-btn');
+      shellDots.forEach(function (dot, dIdx) {
+        if (dIdx < eventsList.length && !dot.dataset.wired) {
+          dot.dataset.wired = 'true';
+          dot.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            currentEventIndex = dIdx % eventsList.length;
+            renderSlide(currentEventIndex);
+            pauseEventAutoScrollTemporarily(6000);
+          };
+        }
+      });
+
+      // Touch swipe support for smooth mobile interaction
+      if (!shell.dataset.swipeWired) {
+        shell.dataset.swipeWired = 'true';
+        var touchStartX = 0;
+        var touchStartY = 0;
+        shell.addEventListener('touchstart', function (e) {
+          if (e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+        shell.addEventListener('touchend', function (e) {
+          if (e.changedTouches && e.changedTouches[0]) {
+            var diffX = e.changedTouches[0].clientX - touchStartX;
+            var diffY = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+              if (diffX < 0) {
+                currentEventIndex = (currentEventIndex + 1) % eventsList.length;
+              } else {
+                currentEventIndex = (currentEventIndex - 1 + eventsList.length) % eventsList.length;
+              }
+              renderSlide(currentEventIndex);
+              pauseEventAutoScrollTemporarily(6000);
+            }
+          }
+        }, { passive: true });
+      }
+    });
+
+    // Pause events auto-scroll on hover or touch so user can comfortably read details
+    document.querySelectorAll('.wedding-event-grid, .wedding-photo-shell, .wedding-fade-up').forEach(function (elem) {
+      if (elem.dataset.hoverWired) return;
+      elem.dataset.hoverWired = 'true';
+      elem.addEventListener('mouseenter', function () {
+        if (eventConfig.pause_on_hover !== false) {
+          isEventCarouselPaused = true;
+        }
+      }, { passive: true });
+      elem.addEventListener('mouseleave', function () {
+        isEventCarouselPaused = false;
+      }, { passive: true });
+      elem.addEventListener('touchstart', function () {
+        pauseEventAutoScrollTemporarily(6000);
+      }, { passive: true });
     });
 
     // 5. Page 5: Our Story removed per user request (hidden completely via CSS)
 
-    // 6. Page 6: RSVP
-    if (config.rsvp) {
-      var rsvpHeading = document.querySelector('.wedding-rsvp-title');
-      if (rsvpHeading && hasOwn(config.rsvp, 'heading')) setTextContent(rsvpHeading, config.rsvp.heading);
-      var rsvpButton = document.querySelector('.wedding-rsvp-action-btn span');
-      if (rsvpButton && hasOwn(config.rsvp, 'button_text')) setTextContent(rsvpButton, config.rsvp.button_text);
-      var rsvpNote = document.querySelector('[data-framer-name="RSVP Note"] p');
-      if (rsvpNote && hasOwn(config.rsvp, 'note')) setTextContent(rsvpNote, config.rsvp.note || '');
-      var rsvpPresentationNote = document.querySelector('.wedding-rsvp-note');
-      if (rsvpPresentationNote && hasOwn(config.rsvp, 'note')) setTextContent(rsvpPresentationNote, config.rsvp.note || '');
+    // 6. Page 6: RSVP Self-Healing Stage & Config
+    ensureRSVPStage(config, siteTitle);
 
-      setupRSVP(config, siteTitle);
-    }
-
-    // 7. Page 7: Hashtag, Handle & Live Countdown
-    if (couple.hashtag) {
-      var hashP = document.querySelector('[data-framer-name="#"] p');
-      if (hashP) setTextContent(hashP, couple.hashtag);
-    }
-    if (couple.instagram_handle) {
-      var handleP = document.querySelector('[data-framer-name="THE ARTFUL INVITES"] p');
-      if (handleP) setTextContent(handleP, couple.instagram_handle);
-    }
+    // 7. Page 7: Instagram Self-Healing Stage & Config
+    ensureInstagramStage(config);
 
     // Helper to parse dates robustly across all browser engines
     function parseTargetDate(dateStr) {
@@ -437,18 +616,32 @@
 
         var timerContainer = document.querySelector('.framer-uuu3on-container');
         if (timerContainer) {
-          var flexDivs = timerContainer.querySelectorAll('div');
-          flexDivs.forEach(function (d) {
-            d.style.justifyContent = 'center';
-          });
-          var spans = timerContainer.querySelectorAll('span');
-          // spans layout: [0]=Days, [1]='D', [2]=':', [3]=Hours, [4]='H', [5]=':', [6]=Minutes, [7]='M', [8]=':', [9]=Seconds, [10]='S'
-          if (spans.length >= 10) {
-            setTextContent(spans[0], String(days).padStart(2, '0'));
-            setTextContent(spans[3], String(hours).padStart(2, '0'));
-            setTextContent(spans[6], String(minutes).padStart(2, '0'));
-            setTextContent(spans[9], String(seconds).padStart(2, '0'));
+          var timerWrap = document.getElementById('weddingCountdownTimerWrap');
+          if (!timerWrap || timerWrap.parentElement !== timerContainer) {
+            if (!timerWrap) {
+              timerWrap = document.createElement('div');
+              timerWrap.id = 'weddingCountdownTimerWrap';
+              timerWrap.className = 'wedding-countdown-timer-wrap';
+              timerWrap.innerHTML =
+                '<div class="wedding-timer-unit"><span class="wedding-timer-val" id="timerDays">00</span><span class="wedding-timer-lbl">DAYS</span></div>' +
+                '<span class="wedding-timer-sep">:</span>' +
+                '<div class="wedding-timer-unit"><span class="wedding-timer-val" id="timerHours">00</span><span class="wedding-timer-lbl">HOURS</span></div>' +
+                '<span class="wedding-timer-sep">:</span>' +
+                '<div class="wedding-timer-unit"><span class="wedding-timer-val" id="timerMins">00</span><span class="wedding-timer-lbl">MINUTES</span></div>' +
+                '<span class="wedding-timer-sep">:</span>' +
+                '<div class="wedding-timer-unit"><span class="wedding-timer-val" id="timerSecs">00</span><span class="wedding-timer-lbl">SECONDS</span></div>';
+            }
+            timerContainer.innerHTML = '';
+            timerContainer.appendChild(timerWrap);
           }
+          var dEl = document.getElementById('timerDays');
+          var hEl = document.getElementById('timerHours');
+          var mEl = document.getElementById('timerMins');
+          var sEl = document.getElementById('timerSecs');
+          if (dEl) dEl.textContent = String(days).padStart(2, '0');
+          if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+          if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+          if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
         }
         document.querySelectorAll('[data-framer-name="COUNTING THE DAYS"] p').forEach(function (titleEl) {
           if (config.countdown && hasOwn(config.countdown, 'title')) setTextContent(titleEl, config.countdown.title);
@@ -462,17 +655,6 @@
     // 8. In Countdown Page: Add 2 Venue Locations (Wedding Ceremony & Reception) with Dates & Map links
     renderCountdownVenues(config);
 
-    // 9. Wire Instagram link
-    var instaBtn = document.querySelector('.framer-131l9v1 a[data-framer-name="Instagram"], [data-framer-name="PAGE 7"] a');
-    if (instaBtn && !instaBtn.dataset.wired) {
-      instaBtn.dataset.wired = 'true';
-      var rawHandle = couple.instagram_handle || '@kaliyappan_rajkumar';
-      var cleanHandle = rawHandle.replace('@', '');
-      instaBtn.href = 'https://www.instagram.com/' + cleanHandle + '/';
-      instaBtn.target = '_blank';
-      instaBtn.rel = 'noopener noreferrer';
-    }
-
     // 10. Custom Dedicated Wedding Music Player (decoupled from Framer React hydration)
     setupWeddingMusicPlayer(config);
 
@@ -481,6 +663,99 @@
     setupCinematicStageReveals(config);
     initializeTaglineFlowSync();
     scheduleTaglineFlowSync();
+    } finally {
+      setTimeout(function () {
+        isApplyingConfig = false;
+      }, 150);
+    }
+  }
+
+  function ensureRSVPStage(config, siteTitle) {
+    var p6 = document.querySelector('.framer-2ws2lg') || document.querySelector('.framer-iobn9w');
+    if (!p6) return;
+    var card = document.getElementById('weddingRSVPPresentationCard');
+    var rsvpCfg = (config && config.rsvp) ? config.rsvp : {};
+    var heading = rsvpCfg.heading || "Will you Join Us?";
+    var note = rsvpCfg.note || "We would be truly honoured to celebrate this day with you. Please let us know if you'll be joining the festivities — your presence is the only gift we need.";
+    var btnText = rsvpCfg.button_text || "RSVP on WhatsApp";
+
+    if (!card || card.parentElement !== p6) {
+      if (!card) {
+        card = document.createElement('div');
+        card.className = 'wedding-rsvp-presentation-card';
+        card.id = 'weddingRSVPPresentationCard';
+        card.innerHTML =
+          '<h2 class="wedding-rsvp-title">' + heading + '</h2>' +
+          '<p class="wedding-rsvp-note">' + note + '</p>' +
+          '<button type="button" class="wedding-rsvp-action-btn" id="weddingRSVPActionBtn" aria-haspopup="dialog" aria-controls="weddingRSVPModal">' +
+          '<svg class="wedding-rsvp-wa-icon" viewBox="0 0 24 24" fill="currentColor">' +
+          '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.488"/>' +
+          '</svg>' +
+          '<span>' + btnText + '</span>' +
+          '</button>';
+      }
+      p6.appendChild(card);
+    }
+    var titleEl = card.querySelector('.wedding-rsvp-title');
+    var noteEl = card.querySelector('.wedding-rsvp-note');
+    var btnSpan = card.querySelector('.wedding-rsvp-action-btn span');
+    if (titleEl && heading) titleEl.textContent = heading;
+    if (noteEl && note) noteEl.textContent = note;
+    if (btnSpan && btnText) btnSpan.textContent = btnText;
+
+    card.style.opacity = '1';
+    card.style.visibility = 'visible';
+    card.style.display = 'flex';
+
+    var btn = card.querySelector('#weddingRSVPActionBtn');
+    if (btn && !btn.onclick) {
+      btn.onclick = function (e) {
+        if (window.__weddingTriggerRSVP) window.__weddingTriggerRSVP(e);
+      };
+    }
+
+    setupRSVP(config, siteTitle);
+  }
+
+  function ensureInstagramStage(config) {
+    var p7 = document.querySelector('.framer-j3fgqj') || document.querySelector('.framer-131l9v1');
+    if (!p7) return;
+    var stage = document.getElementById('weddingInstagramStage');
+    var coupleCfg = (config && config.couple) ? config.couple : {};
+    var hashtag = coupleCfg.hashtag || "#RajkumarRubitha";
+    var handle = coupleCfg.instagram_handle || "@kaliyappan_rajkumar";
+    var cleanHandle = handle.replace(/^@/, '');
+    var instaUrl = "https://www.instagram.com/" + cleanHandle + "/";
+
+    if (!stage || stage.parentElement !== p7) {
+      if (!stage) {
+        stage = document.createElement('div');
+        stage.className = 'wedding-instagram-stage';
+        stage.id = 'weddingInstagramStage';
+        stage.innerHTML =
+          '<h2 class="wedding-instagram-title">Instagram</h2>' +
+          '<div class="wedding-instagram-hashtag" data-framer-name="#">' + hashtag + '</div>' +
+          '<a class="wedding-instagram-action-btn" id="weddingInstagramActionBtn" data-framer-name="Instagram" href="' + instaUrl + '" target="_blank" rel="noopener noreferrer">' +
+          '<span>instagram</span>' +
+          '</a>';
+      }
+      p7.appendChild(stage);
+    }
+    var tagEl = stage.querySelector('.wedding-instagram-hashtag');
+    var linkEl = stage.querySelector('#weddingInstagramActionBtn');
+    if (tagEl && hashtag) tagEl.textContent = hashtag;
+    if (linkEl) linkEl.href = instaUrl;
+
+    stage.style.opacity = '1';
+    stage.style.visibility = 'visible';
+    stage.style.display = 'flex';
+
+    var extraInsta = document.querySelectorAll('.wedding-instagram-action-btn, #weddingInstagramActionBtn, .framer-131l9v1 a[data-framer-name="Instagram"]');
+    extraInsta.forEach(function (b) {
+      b.href = instaUrl;
+      b.target = '_blank';
+      b.rel = 'noopener noreferrer';
+    });
   }
 
   function setupRSVP(config, siteTitle) {
@@ -731,6 +1006,34 @@
       };
     }
 
+    // In-place update to prevent destroying DOM elements and stopping blinking completely
+    if (venueContainer && venueContainer.children.length > 0) {
+      var weddingCard = venueContainer.querySelector('.wedding-venue-card.wedding-card');
+      if (weddingCard) {
+        var wTitle = weddingCard.querySelector('.wedding-venue-title');
+        if (wTitle) wTitle.textContent = weddingEv.venue || 'Sivagiri Velayuthaswamy Temple';
+        var wDate = weddingCard.querySelector('.datetime span:last-child');
+        if (wDate) wDate.textContent = (weddingEv.date || '25 October 2026') + (weddingEv.time ? (' • ' + weddingEv.time) : '');
+        var wPlace = weddingCard.querySelector('.place span:last-child');
+        if (wPlace) wPlace.textContent = weddingEv.venue || 'Sivagiri Velayuthaswamy Temple';
+        var wLink = weddingCard.querySelector('.wedding-venue-map-link');
+        if (wLink && weddingEv.location_url) wLink.href = weddingEv.location_url;
+      }
+
+      var receptionCard = venueContainer.querySelector('.wedding-venue-card.reception-card');
+      if (receptionCard) {
+        var rTitle = receptionCard.querySelector('.wedding-venue-title');
+        if (rTitle) rTitle.textContent = receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam';
+        var rDate = receptionCard.querySelector('.datetime span:last-child');
+        if (rDate) rDate.textContent = (receptionEv.date || '24 October 2026') + (receptionEv.time ? (' • ' + receptionEv.time) : '');
+        var rPlace = receptionCard.querySelector('.place span:last-child');
+        if (rPlace) rPlace.textContent = receptionEv.venue || 'Uthami Ponnusamy Thirumana Mandapam';
+        var rLink = receptionCard.querySelector('.wedding-venue-map-link');
+        if (rLink && receptionEv.location_url) rLink.href = receptionEv.location_url;
+      }
+      return;
+    }
+
     var mapSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>';
 
     var html = '\
@@ -869,268 +1172,23 @@
           display: flex !important;\
           flex-direction: column !important;\
         }\
-        /* Visual Order: Countdown & Locations (order 7), Instagram (order 8) */\
-        .framer-m7ulU .framer-s1eh8d {\
-          order: 7 !important;\
-          height: 1050px !important;\
-          min-height: 980px !important;\
-          max-height: 1200px !important;\
-          overflow: hidden !important;\
-          position: relative !important;\
-        }\
-        .framer-m7ulU .framer-131l9v1 {\
-          order: 8 !important;\
-          position: relative !important;\
-          overflow: hidden !important;\
-          height: 650px !important;\
-          min-height: 550px !important;\
-          max-height: 750px !important;\
-          margin-bottom: 0 !important;\
-          padding-bottom: 0 !important;\
-        }\
         .framer-s1eh8d .framer-1u82y34,\
         .framer-s1eh8d .framer-evcqq4-container {\
           display: none !important;\
           visibility: hidden !important;\
         }\
-        .framer-s1eh8d [data-framer-name="COUNTING THE DAYS"] {\
-          position: absolute !important;\
-          top: 40px !important;\
-          left: 50% !important;\
-          transform: translateX(-50%) !important;\
-          z-index: 20 !important;\
-          display: flex !important;\
-          justify-content: center !important;\
-          align-items: center !important;\
-          width: 90% !important;\
-          max-width: 500px !important;\
-          height: 80px !important;\
-          margin: 0 !important;\
-        }\
-        .framer-s1eh8d [data-framer-name="COUNTING THE DAYS"] p {\
-          font-family: "Luxurious Script", cursive, serif !important;\
-          font-size: 58px !important;\
-          line-height: 1.1 !important;\
-          color: rgb(88, 11, 26) !important;\
-          text-align: center !important;\
-          margin: 0 !important;\
-        }\
-        .framer-s1eh8d .framer-uuu3on-container {\
-          position: absolute !important;\
-          top: 150px !important;\
-          left: 50% !important;\
-          transform: translateX(-50%) !important;\
-          z-index: 20 !important;\
-          width: 90% !important;\
-          max-width: 520px !important;\
-          height: auto !important;\
-          display: flex !important;\
-          justify-content: center !important;\
-          align-items: center !important;\
-          margin: 0 !important;\
-        }\
-        .framer-uuu3on-container,\
-        .framer-uuu3on-container > div,\
-        .framer-uuu3on-container > div > div,\
-        .framer-uuu3on-container [style*="display: flex"],\
-        .framer-uuu3on-container div {\
-          justify-content: center !important;\
-          text-align: center !important;\
-        }\
-        .framer-uuu3on-container > div {\
-          margin-left: auto !important;\
-          margin-right: auto !important;\
-          display: flex !important;\
-          justify-content: center !important;\
-        }\
-        .framer-uuu3on-container > div > div {\
-          justify-content: center !important;\
-          margin-left: auto !important;\
-          margin-right: auto !important;\
-        }\
-        .framer-18d2840,\
-        .framer-m7ulU .framer-18d2840 {\
-          left: 50% !important;\
-          transform: translate(-50%, -50%) !important;\
-          text-align: center !important;\
-          display: flex !important;\
-          justify-content: center !important;\
-          align-items: center !important;\
-          width: auto !important;\
-          max-width: 447px !important;\
-        }\
-        .framer-18d2840 p,\
-        .framer-m7ulU .framer-18d2840 p {\
-          text-align: center !important;\
+        .framer-m7ulU .framer-131l9v1 {\
+          order: 8 !important;\
+          position: relative !important;\
+          overflow: hidden !important;\
           width: 100% !important;\
-        }\
-        .framer-s1eh8d #wedding-countdown-venues {\
-          position: absolute !important;\
-          top: 360px !important;\
-          left: 50% !important;\
-          transform: translateX(-50%) !important;\
-          width: 92% !important;\
-          max-width: 720px !important;\
-          display: flex !important;\
-          flex-direction: row !important;\
-          justify-content: center !important;\
-          align-items: stretch !important;\
-          gap: 20px !important;\
-          z-index: 30 !important;\
-          box-sizing: border-box !important;\
-          pointer-events: auto !important;\
-          isolation: isolate !important;\
-        }\
-        .wedding-venue-card {\
-          flex: 1 1 0;\
-          min-width: 0;\
-          background: rgba(255, 255, 255, 0.96);\
-          backdrop-filter: blur(12px);\
-          -webkit-backdrop-filter: blur(12px);\
-          border: 1.5px solid rgba(205, 174, 128, 0.45);\
-          border-top: 4px solid rgb(205, 174, 128);\
-          border-radius: 18px;\
-          padding: 18px 20px;\
-          box-shadow: 0 8px 24px rgba(88, 11, 26, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);\
-          display: flex;\
-          flex-direction: column;\
-          justify-content: space-between;\
-          box-sizing: border-box;\
-          text-align: left;\
-          transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;\
-          pointer-events: auto;\
-          position: relative;\
-          cursor: default;\
-        }\
-        .wedding-venue-card:hover {\
-          border-color: rgba(205, 174, 128, 0.9);\
-          background: rgba(255, 255, 255, 1);\
-          box-shadow: 0 12px 32px rgba(88, 11, 26, 0.15), 0 4px 14px rgba(205, 174, 128, 0.3);\
-        }\
-        .wedding-venue-badge {\
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\
-          font-size: 11px;\
-          font-weight: 700;\
-          letter-spacing: 0.12em;\
-          text-transform: uppercase;\
-          color: rgb(185, 140, 75);\
-          margin-bottom: 6px;\
-        }\
-        .wedding-venue-title {\
-          font-family: "Instrument Serif", "Abhaya Libre", serif;\
-          font-size: 21px;\
-          font-weight: 600;\
-          color: rgb(88, 11, 26);\
-          line-height: 1.25;\
-          margin-bottom: 10px;\
-        }\
-        .wedding-venue-row {\
-          display: flex;\
-          align-items: flex-start;\
-          gap: 8px;\
-          margin-bottom: 8px;\
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\
-          font-size: 13.5px;\
-          line-height: 1.35;\
-          color: rgb(60, 50, 45);\
-        }\
-        .wedding-venue-row.datetime {\
-          font-weight: 600;\
-          color: rgb(88, 11, 26);\
-        }\
-        .wedding-venue-icon {\
-          font-size: 14px;\
-          line-height: 1;\
-          flex-shrink: 0;\
-        }\
-        .wedding-venue-map-link {\
-          margin-top: 12px;\
-          display: inline-flex;\
-          align-items: center;\
-          justify-content: center;\
-          gap: 7px;\
-          background: linear-gradient(135deg, rgb(88, 11, 26), rgb(125, 20, 40));\
-          color: #ffffff !important;\
-          text-decoration: none !important;\
-          border-radius: 20px;\
-          padding: 9px 16px;\
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\
-          font-size: 12.5px;\
-          font-weight: 600;\
-          box-shadow: 0 3px 10px rgba(88, 11, 26, 0.25);\
-          transition: background 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;\
-          width: fit-content;\
-          cursor: pointer;\
-          pointer-events: auto;\
-          position: relative;\
-          z-index: 2;\
-        }\
-        .wedding-venue-map-link:hover {\
-          background: linear-gradient(135deg, rgb(110, 15, 33), rgb(150, 25, 48));\
-          box-shadow: 0 6px 18px rgba(88, 11, 26, 0.4);\
-          filter: brightness(1.1);\
-          color: #ffffff !important;\
-        }\
-        @media (max-width: 768px) {\
-          .framer-m7ulU .framer-s1eh8d {\
-            height: 1100px !important;\
-            min-height: 1050px !important;\
-          }\
-          .framer-s1eh8d [data-framer-name="COUNTING THE DAYS"] {\
-            top: 25px !important;\
-            height: 65px !important;\
-          }\
-          .framer-s1eh8d [data-framer-name="COUNTING THE DAYS"] p {\
-            font-size: 44px !important;\
-          }\
-          .framer-s1eh8d .framer-uuu3on-container {\
-            top: 115px !important;\
-          }\
-          .framer-s1eh8d #wedding-countdown-venues {\
-            top: 275px !important;\
-            flex-direction: column !important;\
-            max-width: 350px !important;\
-            gap: 14px !important;\
-          }\
-          .framer-m7ulU .framer-131l9v1 {\
-            height: 480px !important;\
-            min-height: 420px !important;\
-            max-height: 550px !important;\
-          }\
-          .wedding-venue-card {\
-            padding: 14px 16px;\
-          }\
-          .wedding-venue-title {\
-            font-size: 19px;\
-            margin-bottom: 8px;\
-          }\
-          .wedding-venue-row {\
-            font-size: 13px;\
-            margin-bottom: 6px;\
-          }\
-          #wedding-music-widget {\
-            bottom: 16px;\
-            left: 16px;\
-            max-width: calc(100vw - 32px);\
-          }\
-          #wedding-play-toggle {\
-            width: 46px;\
-            height: 46px;\
-            border-radius: 23px;\
-          }\
-          #wedding-music-label {\
-            font-size: 12px !important;\
-            max-width: 90px;\
-            overflow: hidden;\
-            text-overflow: ellipsis;\
-          }\
-          .wedding-speed-label {\
-            display: none;\
-          }\
-          .wedding-speed-btn {\
-            padding: 2px 6px;\
-            font-size: 11px;\
-          }\
+          max-width: min(95vw, 650px) !important;\
+          aspect-ratio: 2 / 3 !important;\
+          height: auto !important;\
+          min-height: 0 !important;\
+          max-height: 92vh !important;\
+          margin: 0 auto !important;\
+          padding: 0 !important;\
         }\
         @keyframes weddingPulseGlow {\
           0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(185, 150, 98, 0.4); }\
@@ -1141,8 +1199,9 @@
         @keyframes eqBounce3 { 0%, 100% { height: 6px; } 50% { height: 18px; } }\
         #wedding-music-widget {\
           position: fixed;\
-          bottom: 24px;\
-          left: 24px;\
+          bottom: 20px;\
+          left: 20px;\
+          right: auto;\
           z-index: 999999;\
           display: flex;\
           align-items: center;\
@@ -1333,6 +1392,23 @@
         }\
         #wedding-music-widget.is-minimized #wedding-widget-minimize {\
           display: none !important;\
+        }\
+        @media (max-width: 600px) {\
+          #wedding-music-widget {\
+            bottom: 14px;\
+            left: 12px;\
+            right: auto;\
+            max-width: calc(100vw - 24px);\
+          }\
+          #wedding-play-toggle {\
+            width: 46px;\
+            height: 46px;\
+            border-radius: 23px;\
+          }\
+          #wedding-music-label {\
+            max-width: 80px;\
+          }\
+        }\
       ';
       document.head.appendChild(st);
     }
@@ -1410,8 +1486,8 @@
         var btn = document.getElementById('wedding-play-toggle');
         if (btn) {
           btn.innerHTML = isPlaying ? pauseSvg : playSvg;
-          btn.setAttribute('aria-label', isPlaying ? 'Pause Music' : 'Play Music');
-          btn.setAttribute('title', isPlaying ? 'Pause Music' : 'Play Music');
+          btn.setAttribute('aria-label', isPlaying ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
+          btn.setAttribute('title', isPlaying ? 'Pause Music & Auto-Scroll' : 'Play Music & Auto-Scroll');
         }
         if (isPlaying) {
           widget.classList.add('is-playing');
@@ -1434,7 +1510,16 @@
           e.preventDefault();
           e.stopPropagation();
         }
-        if (audio.paused) {
+        var isPlaying = !audio.paused;
+        if (isPlaying) {
+          // Pause both music and auto-scroll
+          audio.pause();
+          updatePlayState(false);
+          if (window.__weddingPauseAutoScroll) {
+            window.__weddingPauseAutoScroll();
+          }
+        } else {
+          // Play both music and auto-scroll
           var p = audio.play();
           if (p !== undefined) {
             p.then(function () {
@@ -1443,10 +1528,12 @@
               console.warn('Audio play prevented:', err);
               updatePlayState(false);
             });
+          } else {
+            updatePlayState(true);
           }
-        } else {
-          audio.pause();
-          updatePlayState(false);
+          if (window.__weddingResumeAutoScroll) {
+            window.__weddingResumeAutoScroll();
+          }
         }
       }
 
@@ -1570,7 +1657,7 @@
     }
   }
 
-  // 9. Slow Cinematic Auto-Scroll with Dynamic 1x / 2x Speed
+  // 9. Smooth Cinematic Page Auto-Scroll with Dynamic 1x / 2x Speed Controls
   function setupAutoScroll(config) {
     if (window.__weddingAutoScrollInitialized) return;
     window.__weddingAutoScrollInitialized = true;
@@ -1590,26 +1677,52 @@
     var currentMultiplier = 1;
     var isLoopRunning = false;
     var cachedTargetStop = null;
+    var isManuallyPaused = false;
 
     function getTargetStop() {
       if (cachedTargetStop !== null) return cachedTargetStop;
       var docH = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
       var winH = window.innerHeight || 0;
       var maxScroll = Math.max(0, docH - winH);
-      var countdownPage = document.querySelector('.framer-s1eh8d');
-      if (countdownPage) {
-        var rect = countdownPage.getBoundingClientRect();
-        var currentY = window.scrollY || window.pageYOffset || 0;
-        cachedTargetStop = Math.min(maxScroll, Math.max(0, rect.top + currentY));
-      } else {
-        cachedTargetStop = maxScroll;
-      }
+      cachedTargetStop = maxScroll;
       return cachedTargetStop;
     }
 
     window.addEventListener('resize', function () {
       cachedTargetStop = null;
     }, { passive: true });
+
+    window.__weddingPauseAutoScroll = function () {
+      isManuallyPaused = true;
+      autoScrollActive = false;
+      if (resumeTimer) {
+        clearTimeout(resumeTimer);
+        resumeTimer = null;
+      }
+    };
+
+    window.__weddingResumeAutoScroll = function () {
+      isManuallyPaused = false;
+      userInteracting = false;
+      if (resumeTimer) {
+        clearTimeout(resumeTimer);
+        resumeTimer = null;
+      }
+      scrollPos = window.scrollY || window.pageYOffset || 0;
+      var targetStop = getTargetStop();
+      if (scrollPos < targetStop - 5) {
+        autoScrollActive = true;
+        if (!isLoopRunning) {
+          isLoopRunning = true;
+          lastTime = null;
+          requestAnimationFrame(step);
+        }
+      }
+    };
+
+    window.__weddingIsAutoScrollActive = function () {
+      return autoScrollActive && !isManuallyPaused;
+    };
 
     window.__weddingSetScrollSpeed = function (multiplier) {
       currentMultiplier = multiplier;
@@ -1619,6 +1732,7 @@
 
       var targetStop = getTargetStop();
       if (window.scrollY < targetStop - 10) {
+        isManuallyPaused = false;
         autoScrollActive = true;
         if (!isLoopRunning) {
           isLoopRunning = true;
@@ -1643,20 +1757,44 @@
           }
         }
       }
+      if (isManuallyPaused) {
+        userInteracting = true;
+        scrollPos = window.scrollY || window.pageYOffset || 0;
+        if (resumeTimer) {
+          clearTimeout(resumeTimer);
+          resumeTimer = null;
+        }
+        return;
+      }
       userInteracting = true;
       scrollPos = window.scrollY || window.pageYOffset || 0;
       if (resumeTimer) clearTimeout(resumeTimer);
       resumeTimer = setTimeout(function () {
+        if (isManuallyPaused) return;
         scrollPos = window.scrollY || window.pageYOffset || 0;
         userInteracting = false;
+        var targetStop = getTargetStop();
+        if (scrollPos < targetStop - 10 && !isLoopRunning) {
+          autoScrollActive = true;
+          isLoopRunning = true;
+          lastTime = null;
+          requestAnimationFrame(step);
+        }
       }, resumeDelay);
     }
 
+    // Genuine user interactions that pause page auto-scroll
     ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown'].forEach(function (ev) {
       window.addEventListener(ev, handleUserInput, { passive: true });
     });
 
     function step(timestamp) {
+      if (isManuallyPaused) {
+        autoScrollActive = false;
+        isLoopRunning = false;
+        return;
+      }
+
       if (!lastTime) lastTime = timestamp;
       var dt = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
@@ -1664,25 +1802,33 @@
       // Prevent sudden jump if tab was backgrounded
       if (dt > 0.2) dt = 0.016;
 
-      if (!userInteracting) {
-        var targetStop = getTargetStop();
+      var targetStop = getTargetStop();
 
-        if (targetStop > 10) {
-          var effectiveSpeed = baseSpeed * currentMultiplier;
-          if (scrollPos < targetStop - 1) {
-            scrollPos = Math.min(targetStop, scrollPos + effectiveSpeed * dt);
-            window.scrollTo(0, scrollPos);
-          } else {
-            scrollPos = targetStop;
-            window.scrollTo(0, scrollPos);
-            autoScrollActive = false; // Successfully reached countdown page!
+      if (!userInteracting) {
+        var effectiveSpeed = baseSpeed * currentMultiplier;
+        if (scrollPos < targetStop - 1) {
+          scrollPos = Math.min(targetStop, scrollPos + effectiveSpeed * dt);
+          window.scrollTo(0, scrollPos);
+          if (window.__weddingScanCinematicReveals) {
+            window.__weddingScanCinematicReveals();
+          }
+        } else {
+          scrollPos = targetStop;
+          window.scrollTo(0, scrollPos);
+          autoScrollActive = false; // Reached bottom of document
+          if (window.__weddingScanCinematicReveals) {
+            window.__weddingScanCinematicReveals();
           }
         }
       } else {
+        // User is manually scrolling
         scrollPos = window.scrollY || window.pageYOffset || 0;
+        if (window.__weddingScanCinematicReveals) {
+          window.__weddingScanCinematicReveals();
+        }
       }
 
-      if (autoScrollActive) {
+      if (autoScrollActive && !isManuallyPaused) {
         requestAnimationFrame(step);
       } else {
         isLoopRunning = false;
@@ -1691,6 +1837,7 @@
 
     // Start auto-scroll after delay
     setTimeout(function () {
+      if (isManuallyPaused) return;
       scrollPos = window.scrollY || window.pageYOffset || 0;
       if (!isLoopRunning) {
         isLoopRunning = true;
@@ -1700,116 +1847,157 @@
     }, delaySec * 1000);
   }
 
-  // 10. Individual Element Cinematic Entrance Scroll Reveals
+  // 10. Individual Element Cinematic Entrance Scroll Reveals (Triple-Layer Fail-Safe)
   function setupCinematicStageReveals(config) {
-    var targets = document.querySelectorAll(
-      '.wis-deity-wrap, .wis-invite-wrap, .wis-family-block, .wis-couple-wrap, .wis-events-badge, .wedding-venue-card'
-    );
-    if (!targets.length) return;
-
     var revealCfg = (config && (config.cinematic_reveals || config.cinematic || config.appearance)) || {};
-    var isEnabled = revealCfg.enabled !== false;
-    var durationSec = (revealCfg.duration_seconds !== undefined) ? revealCfg.duration_seconds :
-                      ((revealCfg.slowness_seconds !== undefined) ? revealCfg.slowness_seconds : 1.6);
-    var delaySec = (revealCfg.delay_seconds !== undefined) ? revealCfg.delay_seconds :
-                   ((revealCfg.delay !== undefined) ? revealCfg.delay : 0.3);
-    var distPx = (revealCfg.distance_pixels !== undefined) ? revealCfg.distance_pixels :
-                 ((revealCfg.distance !== undefined) ? revealCfg.distance : 32);
-    var staggerSec = (revealCfg.stagger_seconds !== undefined) ? revealCfg.stagger_seconds : 0.12;
-
-    document.documentElement.style.setProperty('--wis-reveal-duration', durationSec + 's');
-    document.documentElement.style.setProperty('--wis-reveal-delay', delaySec + 's');
-    document.documentElement.style.setProperty('--wis-reveal-distance', distPx + 'px');
-    document.documentElement.style.setProperty('--wis-reveal-stagger', staggerSec + 's');
-
-    if (!isEnabled) {
-      document.body.classList.remove('has-cinematic-observer');
-      targets.forEach(function (el) {
-        el.classList.add('is-revealed', 'is-static');
-      });
+    if (revealCfg.enabled === false) {
+      document.body.classList.remove('cinematic-active');
       return;
     }
 
-    var stageItems = document.querySelectorAll('.wedding-invitation-stage > *');
-    stageItems.forEach(function (el, idx) {
-      el.style.setProperty('--item-index', idx);
-    });
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.classList.remove('cinematic-active');
+      return;
+    }
 
-    document.body.classList.add('has-cinematic-observer');
+    var durationSec = (revealCfg.duration_seconds !== undefined) ? revealCfg.duration_seconds : 1.35;
+    var distPx = (revealCfg.distance_pixels !== undefined) ? revealCfg.distance_pixels : 28;
+    var staggerSec = (revealCfg.stagger_seconds !== undefined) ? revealCfg.stagger_seconds : 0.14;
 
-    if ('IntersectionObserver' in window) {
-      if (window.__weddingCinematicObserver) {
-        window.__weddingCinematicObserver.disconnect();
-      }
+    document.documentElement.style.setProperty('--cinematic-duration', durationSec + 's');
+    document.documentElement.style.setProperty('--cinematic-distance', distPx + 'px');
 
-      var hasScrolled = (window.scrollY || window.pageYOffset || 0) > 10;
+    var targetsList = [
+      // Page 2: Invitation elements with staggered delays
+      { sel: '.wis-deity-wrap', delay: '0.04s' },
+      { sel: '.wis-invite-wrap', delay: (0.04 + staggerSec) + 's' },
+      { sel: '.wis-family-block', delay: (0.04 + staggerSec * 2) + 's' },
+      { sel: '.wis-couple-wrap', delay: (0.04 + staggerSec * 3) + 's' },
+      { sel: '.wis-events-badge', delay: (0.04 + staggerSec * 4) + 's' },
+      // Page 6: RSVP Stage Text Elements (Staggered Cinematic Entrance)
+      { sel: '.wedding-rsvp-title', delay: '0.06s' },
+      { sel: '.wedding-rsvp-note', delay: (0.06 + staggerSec) + 's' },
+      { sel: '.wedding-rsvp-action-btn', delay: (0.06 + staggerSec * 2) + 's' },
+      // Page 7: Countdown and Venues
+      { sel: '.framer-s1eh8d [data-framer-name="COUNTING THE DAYS"]', delay: '0.05s' },
+      { sel: '.wedding-countdown-timer-wrap', delay: '0.15s' },
+      { sel: '#weddingCountdownTimerWrap', delay: '0.15s' },
+      { sel: '.wedding-venue-card:first-child', delay: '0.22s' },
+      { sel: '.wedding-venue-card:last-child', delay: '0.36s' },
+      // Page 8: Instagram
+      { sel: '.wedding-instagram-stage', delay: '0.15s' }
+    ];
 
-      function revealTarget(target) {
-        if (!target || target.classList.contains('is-revealed')) return;
-        target.classList.add('is-revealed');
-        if (window.__weddingCinematicObserver) {
-          window.__weddingCinematicObserver.unobserve(target);
-        }
+    window.__weddingElementsToObserve = window.__weddingElementsToObserve || [];
+    var elementsToObserve = window.__weddingElementsToObserve;
 
-        // Lock in permanently as static once the entrance animation completes
-        var onEnd = function (e) {
-          if (e.target === target && (e.propertyName === 'transform' || e.propertyName === 'opacity')) {
-            target.removeEventListener('transitionend', onEnd);
-            target.classList.add('is-static');
-          }
-        };
-        target.addEventListener('transitionend', onEnd);
-        var maxWait = (durationSec + delaySec + (staggerSec * 5) + 0.5) * 1000;
-        setTimeout(function () {
-          target.classList.add('is-static');
-        }, maxWait);
-      }
-
-      var pendingEntries = [];
-
-      window.__weddingCinematicObserver = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            if (hasScrolled) {
-              revealTarget(entry.target);
-            } else {
-              pendingEntries.push(entry.target);
+    targetsList.forEach(function (item) {
+      var found = document.querySelectorAll(item.sel);
+      found.forEach(function (el) {
+        if (!el.classList.contains('is-revealed')) {
+          el.classList.add('cinematic-entry');
+          el.style.setProperty('--item-delay', item.delay);
+          if (elementsToObserve.indexOf(el) === -1) {
+            elementsToObserve.push(el);
+            if (window.__weddingCinematicObserver) {
+              window.__weddingCinematicObserver.observe(el);
             }
           }
-        });
-      }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -30px 0px'
-      });
-
-      var onScrollActivity = function () {
-        hasScrolled = true;
-        window.removeEventListener('scroll', onScrollActivity);
-        window.removeEventListener('wheel', onScrollActivity);
-        window.removeEventListener('touchmove', onScrollActivity);
-        if (pendingEntries.length) {
-          pendingEntries.forEach(function (el) {
-            revealTarget(el);
-          });
-          pendingEntries = [];
         }
+      });
+    });
+
+    if (!elementsToObserve.length) return;
+
+    // Arm the cinematic active mode on body
+    document.documentElement.classList.add('cinematic-ready');
+    document.body.classList.add('cinematic-active');
+
+    function revealTarget(el) {
+      if (!el || el.classList.contains('is-revealed')) return;
+      el.classList.add('is-revealed');
+
+      var cleanup = function () {
+        el.classList.add('is-static');
+        el.removeEventListener('transitionend', onEnd);
       };
 
-      if (!hasScrolled) {
-        window.addEventListener('scroll', onScrollActivity, { passive: true });
-        window.addEventListener('wheel', onScrollActivity, { passive: true });
-        window.addEventListener('touchmove', onScrollActivity, { passive: true });
-      }
+      var onEnd = function (e) {
+        if (e.target === el && (e.propertyName === 'transform' || e.propertyName === 'opacity')) {
+          cleanup();
+        }
+      };
+      el.addEventListener('transitionend', onEnd);
+      setTimeout(cleanup, 2200);
+    }
 
-      targets.forEach(function (el) {
+    var winH = window.innerHeight || document.documentElement.clientHeight || 800;
+
+    // Layer 1: Immediate Viewport Check (ONLY elements currently on screen reveal on initial load)
+    elementsToObserve.forEach(function (el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.height > 0 && rect.top < winH * 0.92 && rect.bottom > 0) {
+        revealTarget(el);
+      }
+    });
+
+    // Layer 2: Viewport Scanner on Scroll / Touch / Wheel / Auto-Scroll
+    function scanVisibleElements() {
+      var currentWinH = window.innerHeight || document.documentElement.clientHeight || 800;
+      var remaining = 0;
+      elementsToObserve.forEach(function (el) {
         if (!el.classList.contains('is-revealed')) {
-          window.__weddingCinematicObserver.observe(el);
+          var rect = el.getBoundingClientRect();
+          if (rect.height > 0 && rect.top < currentWinH * 0.95 && rect.bottom > 0) {
+            revealTarget(el);
+          } else if (!el.classList.contains('is-revealed')) {
+            remaining++;
+          }
         }
       });
-    } else {
-      targets.forEach(function (el) {
-        el.classList.add('is-revealed', 'is-static');
+      return remaining;
+    }
+
+    window.__weddingScanCinematicReveals = scanVisibleElements;
+
+    // Attach scan to scroll, touch, wheel, resize
+    if (!window.__weddingCinematicListenersAttached) {
+      window.__weddingCinematicListenersAttached = true;
+
+      var scrollScanHandler = function () {
+        scanVisibleElements();
+      };
+      ['scroll', 'wheel', 'touchmove', 'resize'].forEach(function (ev) {
+        window.addEventListener(ev, scrollScanHandler, { passive: true });
       });
+
+      // Layer 3: IntersectionObserver (fires only when an element crosses into the screen)
+      if ('IntersectionObserver' in window) {
+        window.__weddingCinematicObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              revealTarget(entry.target);
+              if (window.__weddingCinematicObserver) {
+                window.__weddingCinematicObserver.unobserve(entry.target);
+              }
+            }
+          });
+        }, {
+          threshold: [0, 0.08],
+          rootMargin: '0px 0px -20px 0px'
+        });
+
+        elementsToObserve.forEach(function (el) {
+          if (!el.classList.contains('is-revealed')) {
+            window.__weddingCinematicObserver.observe(el);
+          }
+        });
+      } else {
+        // Fallback for browsers without IntersectionObserver
+        elementsToObserve.forEach(function (el) {
+          el.classList.add('is-revealed', 'is-static');
+        });
+      }
     }
   }
 
@@ -1828,22 +2016,60 @@
         });
     }
 
-    // Keep applied even if Framer hydrates
+    // Keep applied even if Framer hydrates, but skip live clock ticking mutations and our own custom UI
     var debounceTimer = null;
-    var observer = new MutationObserver(function () {
+    var ignoreSelector = '.framer-1q8leab, .framer-hofxkl-container, .wedding-inner-card, .wedding-card-bg-texture, .wedding-card-bg-gradient, .wedding-event-grid, .wedding-photo-shell, .wedding-fade-up, .wedding-fade, .wedding-invitation-stage, .framer-uuu3on-container, #weddingCountdownTimerWrap, #wedding-countdown-venues, #wedding-music-widget, #weddingRSVPModal, #weddingRSVPStage, #weddingInstagramStage, #weddingAutoScrollFab';
+
+    var observer = new MutationObserver(function (mutations) {
+      if (isApplyingConfig) return;
+
+      var shouldApply = false;
+      for (var m = 0; m < mutations.length; m++) {
+        var t = mutations[m].target;
+        if (t && t.closest && t.closest(ignoreSelector)) {
+          continue;
+        }
+        shouldApply = true;
+        break;
+      }
+      if (!shouldApply) return;
+
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function () {
-        if (window.WEDDING_CONFIG) {
+        if (window.WEDDING_CONFIG && !isApplyingConfig) {
           applyWeddingConfig(window.WEDDING_CONFIG);
         }
-      }, 150);
+      }, 300);
     });
 
     var mainEl = document.getElementById('main');
     if (mainEl) {
-      observer.observe(mainEl, { childList: true, subtree: true, characterData: true });
+      observer.observe(mainEl, { childList: true, subtree: true });
     }
+
+    // Framer finishes initial hydration in ~1-2 seconds. Disconnect observer after 6s to eliminate any possible loop.
+    setTimeout(function () {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    }, 6000);
+
+    // Guaranteed hydration re-attachment checkpoints
+    [400, 1000, 2000, 3500].forEach(function (delay) {
+      setTimeout(function () {
+        if (window.WEDDING_CONFIG) {
+          applyWeddingConfig(window.WEDDING_CONFIG);
+        }
+      }, delay);
+    });
   }
+
+  window.addEventListener('load', function () {
+    if (window.WEDDING_CONFIG) {
+      applyWeddingConfig(window.WEDDING_CONFIG);
+    }
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

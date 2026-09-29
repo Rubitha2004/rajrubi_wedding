@@ -39,7 +39,8 @@ window.WEDDING_CONFIG = {
       "time": "07:30 AM",
       "venue": "Uthami Ponnusamy Thirumana Mandapam",
       "description": "Join us as we exchange rings and begin our new journey together.",
-      "location_url": "https://maps.app.goo.gl/QpQ7s2R7rXf5f9T88"
+      "location_url": "https://maps.app.goo.gl/QpQ7s2R7rXf5f9T88",
+      "image": "./assets/images/heritage/event-engagement.jpg"
     },
     {
       "title": "Reception",
@@ -47,19 +48,21 @@ window.WEDDING_CONFIG = {
       "time": "6:00 PM",
       "venue": "Uthami Ponnusamy Thirumana Mandapam",
       "description": "A night of celebration with family and friends.",
-      "location_url": "https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7"
+      "location_url": "https://maps.app.goo.gl/YREAxuKnh2MqcZ3P7",
+      "image": "./assets/images/heritage/event-reception.jpg"
     },
     {
       "title": "Wedding Ceremony",
       "date": "25 October 2026",
       "time": "07:30 AM",
       "venue": "Sivagiri Velayuthaswamy Temple",
-      "description": "",
-      "location_url": "https://maps.app.goo.gl/WvQtLPBUnHoazgyu8"
+      "description": "Join us to celebrate the sacred Muhurtham ceremony and auspicious wedding rituals.",
+      "location_url": "https://maps.app.goo.gl/WvQtLPBUnHoazgyu8",
+      "image": "./assets/images/heritage/event-wedding.webp"
     }
   ],
   "rsvp": {
-    "heading": "Will You Join Us?",
+    "heading": "Will you Join Us?",
     "button_text": "RSVP on WhatsApp",
     "note": "We would be truly honoured to celebrate this day with you. Please let us know if you'll be joining the festivities — your presence is the only gift we need.",
     "whatsapp_number": "+918825822508",
@@ -78,8 +81,13 @@ window.WEDDING_CONFIG = {
   "auto_scroll": {
     "enabled": true,
     "delay_seconds": 2,
-    "speed_pixels_per_second": 50,
+    "speed_pixels_per_second": 90,
     "resume_delay_seconds": 3
+  },
+  "events_auto_scroll": {
+    "enabled": true,
+    "interval_seconds": 2,
+    "pause_on_hover": true
   },
   "cinematic_reveals": {
     "enabled": true,
