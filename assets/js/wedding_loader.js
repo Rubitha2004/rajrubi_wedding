@@ -411,15 +411,20 @@
         return;
       }
 
-      // Smooth, gentle crossfade for actual slide change (never dips to harsh 0.35)
-      document.querySelectorAll('.wedding-fade-up').forEach(function (fadeUp) {
-        fadeUp.style.transition = 'opacity 180ms ease';
-        fadeUp.style.opacity = '0.75';
-        setTimeout(function () {
-          updateCardContent(fadeUp);
-          fadeUp.style.opacity = '1';
-        }, 120);
+      // Smooth, gentle crossfade for actual slide change
+      // IMPORTANT: re-query DOM inside the setTimeout rather than using captured
+      // fadeUp references — Framer may re-hydrate the element in those 120ms,
+      // making the captured reference point to a detached (stale) node.
+      document.querySelectorAll('.wedding-fade-up').forEach(function (el) {
+        el.style.transition = 'opacity 180ms ease';
+        el.style.opacity = '0.75';
       });
+      setTimeout(function () {
+        document.querySelectorAll('.wedding-fade-up').forEach(function (el) {
+          updateCardContent(el);
+          el.style.opacity = '1';
+        });
+      }, 120);
 
       document.querySelectorAll('.wedding-photo').forEach(function (img) {
         updatePhoto(img, true);
@@ -458,6 +463,12 @@
       if (eventsList.length <= 1) return;
       currentEventIndex = (currentEventIndex + 1) % eventsList.length;
       renderSlide(currentEventIndex);
+      // Safety net: silently re-apply content at 400ms in case Framer re-hydrated
+      // the component between now and the first render. No force = isSameSlide path
+      // = no second crossfade, just a quiet content re-check.
+      setTimeout(function () {
+        renderSlide(currentEventIndex);
+      }, 400);
     }
 
     function startEventAutoScroll() {
@@ -465,13 +476,22 @@
         clearInterval(window.__weddingEventAutoScrollTimer);
         window.__weddingEventAutoScrollTimer = null;
       }
+      if (window.__weddingEventAutoScrollStartTimer) {
+        clearTimeout(window.__weddingEventAutoScrollStartTimer);
+        window.__weddingEventAutoScrollStartTimer = null;
+      }
       if (!eventAutoScrollEnabled || eventsList.length <= 1) return;
       var intervalMs = Math.max(2000, Math.round(eventIntervalSeconds * 1000));
-      window.__weddingEventAutoScrollTimer = setInterval(function () {
-        if (!isEventCarouselPaused) {
-          advanceEventSlide();
-        }
-      }, intervalMs);
+      // Delay first tick: Framer may not have fully hydrated .wedding-photo-shell
+      // elements yet. Firing too early renders slides into incomplete DOM -> blank events.
+      var startDelay = Math.max(3500, intervalMs);
+      window.__weddingEventAutoScrollStartTimer = setTimeout(function () {
+        window.__weddingEventAutoScrollTimer = setInterval(function () {
+          if (!isEventCarouselPaused) {
+            advanceEventSlide();
+          }
+        }, intervalMs);
+      }, startDelay);
     }
 
     function pauseEventAutoScrollTemporarily(delayMs) {
@@ -484,7 +504,7 @@
       }, delayMs || 5000);
     }
 
-    if (eventAutoScrollEnabled && !window.__weddingEventAutoScrollTimer) {
+    if (eventAutoScrollEnabled && !window.__weddingEventAutoScrollTimer && !window.__weddingEventAutoScrollStartTimer) {
       startEventAutoScroll();
     }
 
