@@ -7,8 +7,12 @@
       "**/node_modules/**",
       "scratch/**",
       "*.py",
+      "*.bat",
       "*.command",
-      "*.md"
+      "*.md",
+      "package.json",
+      "__pycache__/**",
+      "Insecurities.mp3"
     ],
     "rewrites": [
       {
