@@ -684,6 +684,10 @@
     initializeTaglineFlowSync();
     scheduleTaglineFlowSync();
 
+    // 12.1 Hero text parallax (all text moves down on scroll) + sparkle particles
+    setupHeroParallaxAll();
+    setupHeroSparkles();
+
     // 12. Auspicious Loading Screen Coordinator
     setupWeddingLoadingScreen(config);
     } finally {
@@ -1473,6 +1477,169 @@
             padding: 4px;\
           }\
         }\
+        \
+        /* ====== Hero Section: High-Contrast Text + Shining Animations ====== */\
+        \
+        /* Groom & Bride Names: Rich golden text with strong shadow */\
+        [data-framer-name="GROOM NAME"] p,\
+        [data-framer-name="BRIDE NAME"] p {\
+          --framer-text-color: rgb(255, 223, 120) !important;\
+          color: rgb(255, 223, 120) !important;\
+          text-shadow:\
+            0 2px 8px rgba(0, 0, 0, 0.55),\
+            0 0 30px rgba(255, 200, 60, 0.25),\
+            0 4px 16px rgba(0, 0, 0, 0.3) !important;\
+        }\
+        [data-framer-name="GROOM NAME"] p span,\
+        [data-framer-name="BRIDE NAME"] p span {\
+          color: rgb(255, 223, 120) !important;\
+        }\
+        \
+        /* WEDS connector: warm cream with glow */\
+        [data-framer-name="WEDS"] p {\
+          --framer-text-color: rgb(255, 248, 220) !important;\
+          color: rgb(255, 248, 220) !important;\
+          text-shadow:\
+            0 2px 6px rgba(0, 0, 0, 0.5),\
+            0 0 20px rgba(255, 210, 80, 0.35) !important;\
+        }\
+        \
+        /* Tagline: Bright warm white */\
+        [data-framer-name="TAG LINE"] p {\
+          --framer-text-color: rgb(255, 245, 200) !important;\
+          color: rgb(255, 245, 200) !important;\
+          text-shadow:\
+            0 2px 6px rgba(0, 0, 0, 0.5),\
+            0 0 16px rgba(255, 220, 100, 0.2) !important;\
+        }\
+        [data-framer-name="TAG LINE"] p span span {\
+          color: rgb(255, 245, 200) !important;\
+        }\
+        \
+        /* ====== SHINING SHIMMER EFFECT on ALL hero text ====== */\
+        /* Golden light sweep across names */\
+        [data-framer-name="GROOM NAME"] p,\
+        [data-framer-name="BRIDE NAME"] p {\
+          position: relative;\
+          overflow: visible;\
+        }\
+        [data-framer-name="GROOM NAME"] p::after,\
+        [data-framer-name="BRIDE NAME"] p::after {\
+          content: attr(data-text);\
+          position: absolute;\
+          top: 0; left: 0; right: 0; bottom: 0;\
+          background: linear-gradient(\
+            105deg,\
+            transparent 20%,\
+            rgba(255, 255, 220, 0.5) 35%,\
+            rgba(255, 255, 255, 0.7) 42%,\
+            rgba(255, 255, 220, 0.5) 50%,\
+            transparent 65%\
+          );\
+          background-size: 250% 100%;\
+          background-clip: text;\
+          -webkit-background-clip: text;\
+          color: transparent;\
+          animation: heroShineSwipe 4s ease-in-out infinite;\
+          pointer-events: none;\
+          mix-blend-mode: soft-light;\
+        }\
+        \
+        /* Shine sweep on WEDS */\
+        [data-framer-name="WEDS"] foreignObject p {\
+          position: relative;\
+        }\
+        \
+        /* Shining sweep animation */\
+        @keyframes heroShineSwipe {\
+          0% { background-position: 200% center; }\
+          40% { background-position: -100% center; }\
+          100% { background-position: -100% center; }\
+        }\
+        \
+        /* Glow pulse on ALL hero text */\
+        @keyframes heroGlowPulse {\
+          0%, 100% {\
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 20px rgba(255,210,80,0.15);\
+            filter: brightness(1);\
+          }\
+          50% {\
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 40px rgba(255,210,80,0.45), 0 0 80px rgba(255,180,40,0.12);\
+            filter: brightness(1.08);\
+          }\
+        }\
+        [data-framer-name="GROOM NAME"] p,\
+        [data-framer-name="BRIDE NAME"] p,\
+        [data-framer-name="WEDS"] p,\
+        [data-framer-name="TAG LINE"] p {\
+          animation: heroGlowPulse 3.5s ease-in-out infinite !important;\
+        }\
+        [data-framer-name="BRIDE NAME"] p {\
+          animation-delay: 0.5s !important;\
+        }\
+        [data-framer-name="WEDS"] p {\
+          animation-delay: 1s !important;\
+        }\
+        [data-framer-name="TAG LINE"] p {\
+          animation-delay: 1.5s !important;\
+        }\
+        \
+        /* ====== ALL text moves DOWN on scroll (parallax) ====== */\
+        /* Handled in JS below via heroParallaxAll */\
+        .hero-text-parallax {\
+          transition: transform 0.05s linear;\
+        }\
+        \
+        /* Glowing underline accent for WEDS */\
+        [data-framer-name="WEDS"] foreignObject::after {\
+          content: "";\
+          display: block;\
+          width: 60%;\
+          height: 1.5px;\
+          margin: 6px auto 0;\
+          background: linear-gradient(90deg, transparent, rgba(255, 210, 80, 0.7), transparent);\
+          animation: heroUnderlineGlow 3s ease-in-out infinite;\
+        }\
+        @keyframes heroUnderlineGlow {\
+          0%, 100% { opacity: 0.3; transform: scaleX(0.6); }\
+          50% { opacity: 1; transform: scaleX(1); }\
+        }\
+        \
+        /* Page 1 sky overlay for better text contrast */\
+        [data-framer-name="PAGE 1"] [data-framer-name="SKY"]::before {\
+          content: "";\
+          position: absolute;\
+          top: 0; left: 0; right: 0; bottom: 0;\
+          background: linear-gradient(\
+            180deg,\
+            rgba(0, 0, 0, 0.1) 0%,\
+            rgba(0, 20, 60, 0.25) 30%,\
+            rgba(0, 20, 60, 0.3) 50%,\
+            rgba(0, 10, 40, 0.2) 80%,\
+            rgba(0, 0, 0, 0.05) 100%\
+          );\
+          z-index: 1;\
+          pointer-events: none;\
+        }\
+        \
+        /* Sparkle dot particles */\
+        @keyframes heroSparkle {\
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }\
+          25% { opacity: 1; transform: scale(1) rotate(90deg); }\
+          50% { opacity: 0.8; transform: scale(0.8) rotate(180deg); }\
+          75% { opacity: 0.3; transform: scale(0.5) rotate(270deg); }\
+        }\
+        .hero-sparkle-dot {\
+          position: absolute;\
+          width: 4px;\
+          height: 4px;\
+          border-radius: 50%;\
+          background: radial-gradient(circle, rgba(255,240,180,0.9), transparent);\
+          box-shadow: 0 0 6px rgba(255,220,100,0.6);\
+          pointer-events: none;\
+          z-index: 5;\
+          animation: heroSparkle var(--sparkle-dur, 3s) ease-in-out var(--sparkle-delay, 0s) infinite;\
+        }\
       ';
       document.head.appendChild(st);
     }
@@ -2126,6 +2293,82 @@
         var autoPlayDelay = (musicConfig.delay_seconds !== undefined) ? (musicConfig.delay_seconds * 1000) : 2000;
         setTimeout(triggerMusicPlayback, autoPlayDelay);
       }
+    }
+  }
+
+  // Hero text parallax: ALL hero text moves down as user scrolls
+  function setupHeroParallaxAll() {
+    if (window.__heroParallaxInitialized) return;
+    window.__heroParallaxInitialized = true;
+
+    var heroSelectors = [
+      '[data-framer-name="GROOM NAME"]',
+      '[data-framer-name="BRIDE NAME"]',
+      '[data-framer-name="WEDS"]',
+      '[data-framer-name="TAG LINE"]'
+    ];
+
+    var speeds = [0.35, 0.30, 0.25, 0.20]; // different parallax speeds for depth
+    var heroEls = [];
+
+    heroSelectors.forEach(function (sel, sIdx) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        if (getComputedStyle(el).display !== 'none') {
+          heroEls.push({ el: el, speed: speeds[sIdx] });
+        }
+      });
+    });
+
+    if (!heroEls.length) return;
+
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () {
+        var scrollY = window.scrollY;
+        heroEls.forEach(function (item) {
+          var offset = scrollY * item.speed;
+          item.el.style.setProperty('--hero-parallax-y', offset + 'px');
+          item.el.style.transform = 'translateY(' + offset + 'px)';
+        });
+        ticking = false;
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // initial position
+  }
+
+  // Sparkle particles floating around the hero section
+  function setupHeroSparkles() {
+    if (window.__heroSparklesInitialized) return;
+    window.__heroSparklesInitialized = true;
+
+    var skyEl = document.querySelector('[data-framer-name="SKY"]');
+    if (!skyEl) return;
+
+    // Ensure SKY has position relative for absolute sparkles
+    if (getComputedStyle(skyEl).position === 'static') {
+      skyEl.style.position = 'relative';
+    }
+
+    var sparkleCount = 18;
+    for (var i = 0; i < sparkleCount; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'hero-sparkle-dot';
+      var x = (Math.random() * 90 + 5);
+      var y = (Math.random() * 80 + 10);
+      var size = (Math.random() * 3 + 2);
+      var dur = (Math.random() * 3 + 2.5);
+      var delay = (Math.random() * 4);
+      dot.style.left = x + '%';
+      dot.style.top = y + '%';
+      dot.style.width = size + 'px';
+      dot.style.height = size + 'px';
+      dot.style.setProperty('--sparkle-dur', dur + 's');
+      dot.style.setProperty('--sparkle-delay', delay + 's');
+      skyEl.appendChild(dot);
     }
   }
 

@@ -518,7 +518,7 @@ def main():
     # 1. Update wedding_config.js
     with open(js_path, "w", encoding="utf-8") as f:
         f.write("window.WEDDING_CONFIG = " + json.dumps(config, indent=2, ensure_ascii=False) + ";\n")
-    print("✓ Synchronized wedding_config.js")
+    print("[OK] Synchronized wedding_config.js")
 
     # 2. Update HTML templates
     target_files = ["index.html"]
@@ -549,16 +549,16 @@ def main():
     music_file = first_track.get("file") or music.get("file", "./music/Insecurities.mp3")
     playlist_info = f" ({len(playlist)} tracks)" if playlist else ""
 
-    print("\n✓ Successfully updated templates:")
+    print("\n[OK] Successfully updated templates:")
     for uf in updated_files:
-        print(f"  • {uf}")
+        print(f"  - {uf}")
 
     print(f"\nAll details from wedding_config.json have been applied across all templates:")
-    print(f"  • Couple: {groom} & {bride}")
-    print(f"  • Title: {site_title}")
-    print(f"  • Hashtag: {hashtag}")
-    print(f"  • Music: {music_title} ({music_file}){playlist_info}")
-    print(f"  • Primary Event: {ev_title} on {ev_date} at {ev_venue}")
+    print(f"  - Couple: {groom} & {bride}")
+    print(f"  - Title: {site_title}")
+    print(f"  - Hashtag: {hashtag}")
+    print(f"  - Music: {music_title} ({music_file}){playlist_info}")
+    print(f"  - Primary Event: {ev_title} on {ev_date} at {ev_venue}")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,18 @@
+{
+  "name": "rajkumar-rubitha-wedding",
+  "version": "1.0.0",
+  "description": "Rajkumar & Rubitha Wedding Invitation Website",
+  "scripts": {
+    "start": "python preview.py",
+    "serve": "npx serve -p 8000 .",
+    "update": "python update_wedding.py"
+  },
+  "keywords": [
+    "wedding-invitation",
+    "html5",
+    "framer",
+    "offline-ready"
+  ],
+  "author": "",
+  "license": "ISC"
+}

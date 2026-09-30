@@ -104,7 +104,7 @@
   },
   "events_auto_scroll": {
     "enabled": true,
-    "interval_seconds": 2,
+    "interval_seconds": 3,
     "pause_on_hover": true
   },
   "cinematic_reveals": {

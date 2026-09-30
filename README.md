@@ -48,15 +48,25 @@ Open [wedding_config.json](file://./wedding_config.json) in any text editor and 
 - **Live Countdown Timer**: Wedding target date and time.
 - **Music & Auto-Scroll**: Music title, auto-scroll speed, delay.
 
-### Step 2: Apply the Changes
-Choose either:
-- **Option A (One-Click on Mac)**: Double-click `update_wedding.command` in Finder. It synchronizes all templates and opens `index.html` in your browser.
-- **Option B (Terminal)**: Run:
+### Step 2: Apply the Changes & Preview Locally
+
+Modern browsers block JavaScript ES modules when opened directly from the file system (`file:///`), causing CORS errors (`net::ERR_FAILED`). To view the site locally with full audio, animations, and countdown:
+
+- **Windows (One-Click)**: Double-click **`run_preview.bat`**. It starts the local server and automatically launches `http://localhost:8000` in your default browser.
+- **Mac (One-Click)**: Double-click **`update_wedding.command`** in Finder.
+- **Terminal (Cross-Platform)**:
   ```bash
-  python3 update_wedding.py
+  # Synchronize configuration
+  python update_wedding.py
+
+  # Start local preview server
+  python preview.py
+  ```
+- **Node.js / npm**:
+  ```bash
+  npm start
   ```
 
-The updater regenerates `wedding_config.js` from `wedding_config.json` and refreshes the page's runtime config loader. Refresh the browser after changing config values.
 
 The invitation page uses one stable central content frame for phone, tablet, and desktop widths. The background keeps its portrait frame ratio, while the deity image, invitation text, couple names, and event heading stay inside the central frame during window resizing.
 
