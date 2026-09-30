@@ -2040,7 +2040,7 @@
           e.stopPropagation();
         }
         widget.classList.add('is-minimized');
-        try { sessionStorage.setItem('wedding_widget_minimized', '1'); } catch (err) { }
+        try { sessionStorage.removeItem('wedding_widget_expanded'); } catch (err) { }
       };
     }
     if (expBtn) {
@@ -2050,15 +2050,21 @@
           e.stopPropagation();
         }
         widget.classList.remove('is-minimized');
-        try { sessionStorage.removeItem('wedding_widget_minimized'); } catch (err) { }
+        try { sessionStorage.setItem('wedding_widget_expanded', '1'); } catch (err) { }
       };
     }
 
+    // Start minimized by default on every load.
+    // Only expand if the user explicitly expanded during this session.
     try {
-      if (sessionStorage.getItem('wedding_widget_minimized') === '1') {
+      if (sessionStorage.getItem('wedding_widget_expanded') === '1') {
+        // User previously expanded — keep it expanded
+      } else {
         widget.classList.add('is-minimized');
       }
-    } catch (err) { }
+    } catch (err) {
+      widget.classList.add('is-minimized');
+    }
 
     // Prevent any interactions on the floating menu from bubbling and pausing auto-scroll
     ['pointerdown', 'pointerup', 'pointermove', 'touchstart', 'touchmove', 'touchend', 'mousedown', 'mouseup', 'click'].forEach(function (ev) {
@@ -2079,13 +2085,16 @@
     };
     window.__weddingStartMusic = triggerMusicPlayback;
 
+    // Only genuine user-gesture events unlock audio autoplay on browsers.
+    // 'scroll' and 'wheel' do NOT satisfy autoplay policy — removed intentionally.
+    var _gestureEvents = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
     var gestureUnlock = function () {
       triggerMusicPlayback();
-      ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+      _gestureEvents.forEach(function (ev) {
         window.removeEventListener(ev, gestureUnlock);
       });
     };
-    ['pointerdown', 'touchstart', 'click', 'wheel', 'keydown', 'scroll'].forEach(function (ev) {
+    _gestureEvents.forEach(function (ev) {
       window.addEventListener(ev, gestureUnlock, { passive: true });
     });
 
@@ -2126,14 +2135,29 @@
       var docH = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
       var winH = window.innerHeight || 0;
       var maxScroll = Math.max(0, docH - winH);
+      var currentY = window.scrollY || window.pageYOffset || 0;
+      var isMobile = window.innerWidth < 768;
 
-      // Dedicated target stop: Stop precisely at the Countdown & Locations Section (.framer-s1eh8d)
+      if (isMobile) {
+        // On mobile, section stacks vertically — target the timer/venues directly
+        // so the scroll stops when they are actually visible, not just at section top.
+        var timerEl = document.getElementById('weddingCountdownTimerWrap') ||
+                      document.querySelector('.wedding-countdown-timer-wrap') ||
+                      document.getElementById('wedding-countdown-venues');
+        if (timerEl) {
+          var rect = timerEl.getBoundingClientRect();
+          var elTop = rect.top + currentY;
+          // Stop with timer roughly 15% from the top of the viewport
+          return Math.min(maxScroll, Math.max(0, Math.round(elTop - winH * 0.15)));
+        }
+      }
+
+      // Desktop: stop at the top of the countdown section container
       var countdownEl = document.querySelector('.framer-s1eh8d') ||
                         document.getElementById('wedding-countdown-venues') ||
                         document.querySelector('[data-framer-name="COUNTING THE DAYS"]');
       if (countdownEl) {
         var rect = countdownEl.getBoundingClientRect();
-        var currentY = window.scrollY || window.pageYOffset || 0;
         var countdownTop = rect.top + currentY;
         return Math.min(maxScroll, Math.max(0, Math.round(countdownTop)));
       }
@@ -2627,11 +2651,11 @@
 
     function updateTargetProgress() {
       var p = 0;
-      if (domReady) p += 20;
-      if (windowReady) p += 15;
-      if (fontsReady) p += 15;
-      p += Math.round(imagesRatio * 25);
-      if (audioReady) p += 25;
+      if (domReady) p += 25;
+      if (windowReady) p += 20;
+      if (fontsReady) p += 20;
+      p += Math.round(imagesRatio * 35);
+      // Audio intentionally excluded: mobile browsers block audio preload without gesture
 
       targetProgress = Math.max(targetProgress, Math.min(100, p));
     }
@@ -2697,44 +2721,11 @@
     monitorImages();
 
     // 4. Songs / Background Audio Deck
+    // NOTE: On iOS/Android, audio does not preload without a user gesture.
+    // We must NOT block progress on audio readiness — use a very short timeout.
     function monitorAudio() {
-      var deck = document.getElementById('wedding-custom-audio');
-      if (!deck) {
-        var audioPoll = setInterval(function () {
-          var d = document.getElementById('wedding-custom-audio');
-          if (d) {
-            clearInterval(audioPoll);
-            attachDeckListener(d);
-          }
-        }, 100);
-        setTimeout(function () {
-          clearInterval(audioPoll);
-          audioReady = true;
-          updateTargetProgress();
-        }, 3000);
-        return;
-      }
-      attachDeckListener(deck);
-
-      function attachDeckListener(d) {
-        if (d.readyState >= 2) {
-          audioReady = true;
-          updateTargetProgress();
-          return;
-        }
-        var audioDone = false;
-        function onAudioData() {
-          if (audioDone) return;
-          audioDone = true;
-          audioReady = true;
-          updateTargetProgress();
-        }
-        d.addEventListener('canplay', onAudioData, { once: true });
-        d.addEventListener('canplaythrough', onAudioData, { once: true });
-        d.addEventListener('loadeddata', onAudioData, { once: true });
-        d.addEventListener('error', onAudioData, { once: true });
-        setTimeout(onAudioData, 3500);
-      }
+      audioReady = true; // Never block loading progress on audio
+      updateTargetProgress();
     }
     monitorAudio();
 
@@ -2775,19 +2766,21 @@
         enterBtn.classList.add('is-ready');
         enterBtn.onclick = function (e) {
           if (e) { e.preventDefault(); e.stopPropagation(); }
+          // Play music immediately within the user gesture — browser allows this
+          if (window.__weddingStartMusic) window.__weddingStartMusic();
           executeDismissal();
         };
       }
       loadingEl.onclick = function (e) {
         if (currentProgress >= 90) {
+          // Play music immediately within the user gesture — browser allows this
+          if (window.__weddingStartMusic) window.__weddingStartMusic();
           executeDismissal();
         }
       };
-      if (!autoDismissTimer) {
-        autoDismissTimer = setTimeout(function () {
-          executeDismissal();
-        }, autoDismissDelayMs);
-      }
+      // No auto-dismiss — user must explicitly click "Open Invitation".
+      // This ensures music play() is always called within a real user gesture,
+      // which is required for browser autoplay policy on production HTTPS sites.
     }
 
     // 6. Animation Step Loop

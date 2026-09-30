@@ -227,6 +227,54 @@
       container-type: inline-size !important;
     }
 
+    /* Mobile: invitation stage must sit inside arch top/bottom borders */
+    @media (max-width: 768px) {
+      .wedding-invitation-stage {
+        top: 14% !important;
+        left: 16% !important;
+        width: 68% !important;
+        height: 72% !important;
+        max-height: 72% !important;
+        padding: 0 2% !important;
+        gap: clamp(3px, 1cqw, 7px) !important;
+        justify-content: space-evenly !important;
+      }
+      /* Background card already shows deity in the arch — hide duplicate overlay on mobile */
+      .wis-deity-wrap {
+        display: none !important;
+      }
+      .wis-invite-title {
+        font-size: clamp(20px, 8cqw, 32px) !important;
+        line-height: 1.05 !important;
+      }
+      .wis-family-block {
+        line-height: 1.18 !important;
+      }
+      .wis-family-block p,
+      .wis-family-block .wis-blessings,
+      .wis-family-block .wis-lineage,
+      .wis-family-block .wis-connector,
+      .wis-family-block .wis-invite-text {
+        font-size: clamp(7px, 2.4cqw, 9.5px) !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+      }
+      .wis-family-block .wis-parents,
+      .wis-family-block .wis-grandparents {
+        font-size: clamp(8px, 2.8cqw, 11px) !important;
+      }
+      .wis-couple-wrap .wis-name {
+        font-size: clamp(16px, 6.8cqw, 26px) !important;
+        line-height: 1.08 !important;
+      }
+      .wis-couple-wrap .wis-amp {
+        font-size: clamp(9px, 3.5cqw, 13px) !important;
+      }
+      .wis-events-badge p {
+        font-size: clamp(8px, 2.8cqw, 11.5px) !important;
+      }
+    }
+
     /* ==========================================================================
        Cinematic Presentation & Entrance Reveal Engine
        Zero-blank guaranteed: Default state is 100% visible.
