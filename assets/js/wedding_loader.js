@@ -134,23 +134,31 @@
     if (twTitle && twTitle.content !== siteTitle) twTitle.content = siteTitle;
 
     // 2. Page 1: Hero Names & Details
-    document.querySelectorAll('[data-framer-name="BRIDE NAME"] p span').forEach(function (brideEl) {
+    document.querySelectorAll('[data-framer-name="BRIDE NAME"] p span, [data-framer-name="BRIDE NAME"] p').forEach(function (brideEl) {
       setTextContent(brideEl, brideName);
+      brideEl.style.setProperty('color', '#ffffff', 'important');
+      brideEl.style.setProperty('--framer-text-color', '#ffffff', 'important');
     });
 
-    document.querySelectorAll('[data-framer-name="GROOM NAME"] p span').forEach(function (groomEl) {
+    document.querySelectorAll('[data-framer-name="GROOM NAME"] p span, [data-framer-name="GROOM NAME"] p').forEach(function (groomEl) {
       setTextContent(groomEl, groomName);
+      groomEl.style.setProperty('color', '#ffffff', 'important');
+      groomEl.style.setProperty('--framer-text-color', '#ffffff', 'important');
     });
 
     if (couple.connector) {
       document.querySelectorAll('[data-framer-name="WEDS"] p').forEach(function (connectorEl) {
         setTextContent(connectorEl, couple.connector);
+        connectorEl.style.setProperty('color', '#ffffff', 'important');
+        connectorEl.style.setProperty('--framer-text-color', '#ffffff', 'important');
       });
     }
 
     var tagline = couple.tagline || 'are getting married';
     document.querySelectorAll('[data-framer-name="TAG LINE"] p').forEach(function (taglineEl) {
       updateTaglineText(taglineEl, tagline);
+      taglineEl.style.setProperty('color', '#ffffff', 'important');
+      taglineEl.style.setProperty('--framer-text-color', '#ffffff', 'important');
     });
 
     // 3. Page 2: Invitation Details & Names
@@ -206,7 +214,7 @@
     var bM = brideFamily.mother_name || "Dhanalakshimi";
 
     var gGf = groomFamily.grandfather_name || "Muthusamy Velaphagounder";
-    var gGm = groomFamily.grandmother_name || "Aarukani";
+    var gGm = groomFamily.grandmother_name || "Arukaani";
     var gF = groomFamily.father_name || "Kaliyappan";
     var gM = groomFamily.mother_name || "Susheela";
     var blessingLead = groomFamily.blessing_lead || "With the blessings of the Almighty\nand our beloved elders,";

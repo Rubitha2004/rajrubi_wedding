@@ -14,7 +14,7 @@ window.WEDDING_CONFIG = {
     "father_name": "Kaliyappan",
     "mother_name": "Susheela",
     "grandfather_name": "Muthusamy Velaphagounder",
-    "grandmother_name": "Aarukani",
+    "grandmother_name": "Arukaani",
     "blessing_lead": "With the blessings of the Almighty\nand our beloved elders,",
     "connector": "and",
     "invite_note": "we are cordially invite\nyou to grace the auspicious wedding ceremony of their beloved"
@@ -29,7 +29,7 @@ window.WEDDING_CONFIG = {
   "invitation": {
     "title": "Invite",
     "blessing_lead": "With the blessings of God and our beloved parents,",
-    "blessing_subtitle": "we cordially",
+    "blessing_subtitle": "",
     "events_heading": "On the following events"
   },
   "events": [

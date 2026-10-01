@@ -122,6 +122,24 @@
       flex-direction: column !important;
     }
 
+    /* PAGE 1: Force all hero text to white */
+    .framer-1v6qekl,
+    .framer-1v6qekl *,
+    [data-framer-name="PAGE 1"],
+    [data-framer-name="PAGE 1"] *,
+    [data-framer-name="GROOM NAME"],
+    [data-framer-name="GROOM NAME"] *,
+    [data-framer-name="BRIDE NAME"],
+    [data-framer-name="BRIDE NAME"] *,
+    [data-framer-name="WEDS"],
+    [data-framer-name="WEDS"] *,
+    [data-framer-name="TAG LINE"],
+    [data-framer-name="TAG LINE"] * {
+      --framer-text-color: #ffffff !important;
+      color: #ffffff !important;
+      fill: #ffffff !important;
+    }
+
     /* Hidden Template Components */
     .framer-fwz7u-container,
     [data-framer-name="PAGE 5"],
@@ -258,17 +276,21 @@
         gap: clamp(3px, 1cqw, 7px) !important;
         justify-content: space-evenly !important;
       }
+
       /* Background card already shows deity in the arch — hide duplicate overlay on mobile */
       .wis-deity-wrap {
         display: none !important;
       }
+
       .wis-invite-title {
         font-size: clamp(20px, 8cqw, 32px) !important;
         line-height: 1.05 !important;
       }
+
       .wis-family-block {
         line-height: 1.18 !important;
       }
+
       .wis-family-block p,
       .wis-family-block .wis-blessings,
       .wis-family-block .wis-lineage,
@@ -278,17 +300,21 @@
         line-height: 1.2 !important;
         margin: 0 !important;
       }
+
       .wis-family-block .wis-parents,
       .wis-family-block .wis-grandparents {
         font-size: clamp(8px, 2.8cqw, 11px) !important;
       }
+
       .wis-couple-wrap .wis-name {
         font-size: clamp(16px, 6.8cqw, 26px) !important;
         line-height: 1.08 !important;
       }
+
       .wis-couple-wrap .wis-amp {
         font-size: clamp(9px, 3.5cqw, 13px) !important;
       }
+
       .wis-events-badge p {
         font-size: clamp(8px, 2.8cqw, 11.5px) !important;
       }
@@ -347,6 +373,7 @@
       0% {
         transform: translateY(0);
       }
+
       100% {
         transform: translateY(-5px);
       }
@@ -377,7 +404,7 @@
       transform: translateY(0) scale(1) !important;
       pointer-events: auto !important;
       transition: opacity var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)),
-                  transform var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)) !important;
+        transform var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)) !important;
       transition-delay: var(--item-delay, 0s) !important;
     }
 
@@ -393,7 +420,7 @@
       transform: translateY(0) scale(1) !important;
       pointer-events: auto !important;
       transition: opacity var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)),
-                  transform var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)) !important;
+        transform var(--cinematic-duration, 1.25s) var(--cinematic-ease, cubic-bezier(0.16, 1, 0.3, 1)) !important;
       transition-delay: var(--item-delay, 0s) !important;
     }
 
@@ -435,28 +462,31 @@
       left: -120% !important;
       width: 80% !important;
       height: 100% !important;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.35),
-        transparent
-      ) !important;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.35),
+          transparent) !important;
       transform: skewX(-22deg) !important;
       animation: weddingRsvpShimmer 3.5s ease-in-out infinite !important;
       pointer-events: none !important;
     }
 
     @keyframes weddingRsvpShimmer {
-      0%, 45% {
+
+      0%,
+      45% {
         left: -120%;
       }
-      80%, 100% {
+
+      80%,
+      100% {
         left: 200%;
       }
     }
 
     /* Reduced Motion Accessibility Override */
     @media (prefers-reduced-motion: reduce) {
+
       .wis-deity-img,
       .cinematic-entry,
       body.cinematic-active .cinematic-entry,
@@ -469,6 +499,7 @@
         transition: none !important;
         animation: none !important;
       }
+
       .wedding-rsvp-action-btn::after {
         display: none !important;
       }
@@ -696,11 +727,13 @@
         display: flex !important;
       }
     }
+
     @media (min-width: 810px) and (max-width: 1199.98px) {
       .framer-s1eh8d .framer-kg5lgu[data-framer-name="COUNTING THE DAYS"] {
         display: flex !important;
       }
     }
+
     @media (max-width: 809.98px) {
       .framer-s1eh8d .framer-i02xe6[data-framer-name="COUNTING THE DAYS"] {
         display: flex !important;
@@ -967,8 +1000,8 @@
       padding: clamp(48px, 6vw, 88px) clamp(16px, 3vw, 40px) !important;
     }
 
-    .framer-1q8leab > [data-framer-background-image-wrapper="true"],
-    .framer-m7ulU .framer-1q8leab > [data-framer-background-image-wrapper="true"] {
+    .framer-1q8leab>[data-framer-background-image-wrapper="true"],
+    .framer-m7ulU .framer-1q8leab>[data-framer-background-image-wrapper="true"] {
       position: absolute !important;
       inset: 0 !important;
       width: 100% !important;
@@ -977,8 +1010,8 @@
       z-index: 0 !important;
     }
 
-    .framer-1q8leab > [data-framer-background-image-wrapper="true"] img,
-    .framer-m7ulU .framer-1q8leab > [data-framer-background-image-wrapper="true"] img {
+    .framer-1q8leab>[data-framer-background-image-wrapper="true"] img,
+    .framer-m7ulU .framer-1q8leab>[data-framer-background-image-wrapper="true"] img {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
@@ -1116,7 +1149,7 @@
     }
 
     .wedding-fade-up div[style*="flex-wrap"],
-    .wedding-fade-up > div:nth-of-type(1) {
+    .wedding-fade-up>div:nth-of-type(1) {
       display: flex !important;
       flex-wrap: wrap !important;
       gap: clamp(8px, 1.2vw, 16px) !important;
@@ -1137,7 +1170,7 @@
       color: rgb(185, 140, 75) !important;
     }
 
-    .wedding-fade-up > p {
+    .wedding-fade-up>p {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
       font-size: clamp(16px, 1.3vw, 19px) !important;
       line-height: 1.55 !important;
@@ -1169,6 +1202,7 @@
     }
 
     @media (max-width: 820px) {
+
       .framer-1q8leab,
       .framer-m7ulU .framer-1q8leab {
         width: 100% !important;
@@ -1184,8 +1218,8 @@
         will-change: none !important;
       }
 
-      .framer-1q8leab > [data-framer-background-image-wrapper="true"],
-      .framer-m7ulU .framer-1q8leab > [data-framer-background-image-wrapper="true"] {
+      .framer-1q8leab>[data-framer-background-image-wrapper="true"],
+      .framer-m7ulU .framer-1q8leab>[data-framer-background-image-wrapper="true"] {
         position: absolute !important;
         inset: 0 !important;
         top: 0 !important;
@@ -1203,8 +1237,8 @@
         -webkit-backface-visibility: hidden !important;
       }
 
-      .framer-1q8leab > [data-framer-background-image-wrapper="true"] img,
-      .framer-m7ulU .framer-1q8leab > [data-framer-background-image-wrapper="true"] img {
+      .framer-1q8leab>[data-framer-background-image-wrapper="true"] img,
+      .framer-m7ulU .framer-1q8leab>[data-framer-background-image-wrapper="true"] img {
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
@@ -1314,7 +1348,7 @@
       }
 
       .wedding-fade-up div[style*="flex-wrap"],
-      .wedding-fade-up > div:nth-of-type(1) {
+      .wedding-fade-up>div:nth-of-type(1) {
         min-height: 58px !important;
         height: 58px !important;
         display: flex !important;
@@ -1330,7 +1364,7 @@
         font-size: 13px !important;
       }
 
-      .wedding-fade-up > p {
+      .wedding-fade-up>p {
         font-size: 13.5px !important;
         line-height: 1.4 !important;
         min-height: 4.2em !important;
@@ -1719,7 +1753,7 @@
       align-items: center;
       justify-content: center;
       background-color: #FBF8F2;
-      background-image: 
+      background-image:
         radial-gradient(ellipse at 50% 35%, rgba(212, 163, 89, 0.16) 0%, rgba(251, 248, 242, 0.95) 65%),
         radial-gradient(circle at 85% 15%, rgba(41, 134, 196, 0.07) 0%, transparent 45%),
         radial-gradient(circle at 15% 85%, rgba(88, 11, 26, 0.05) 0%, transparent 45%),
@@ -1779,18 +1813,21 @@
       border-width: 2px 0 0 2px;
       border-top-left-radius: 6px;
     }
+
     .wls-corner-tr {
       top: 24px;
       right: 24px;
       border-width: 2px 2px 0 0;
       border-top-right-radius: 6px;
     }
+
     .wls-corner-bl {
       bottom: 24px;
       left: 24px;
       border-width: 0 0 2px 2px;
       border-bottom-left-radius: 6px;
     }
+
     .wls-corner-br {
       bottom: 24px;
       right: 24px;
@@ -1799,10 +1836,33 @@
     }
 
     @media (max-width: 600px) {
-      .wls-corner-tl { top: 16px; left: 16px; width: 20px; height: 20px; }
-      .wls-corner-tr { top: 16px; right: 16px; width: 20px; height: 20px; }
-      .wls-corner-bl { bottom: 16px; left: 16px; width: 20px; height: 20px; }
-      .wls-corner-br { bottom: 16px; right: 16px; width: 20px; height: 20px; }
+      .wls-corner-tl {
+        top: 16px;
+        left: 16px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .wls-corner-tr {
+        top: 16px;
+        right: 16px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .wls-corner-bl {
+        bottom: 16px;
+        left: 16px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .wls-corner-br {
+        bottom: 16px;
+        right: 16px;
+        width: 20px;
+        height: 20px;
+      }
     }
 
     .wls-content {
@@ -1842,6 +1902,7 @@
         transform: scale(0.96) translateY(0.5px);
         filter: drop-shadow(0 0 4px rgba(255, 179, 0, 0.7));
       }
+
       100% {
         transform: scale(1.08) translateY(-1px);
         filter: drop-shadow(0 0 14px rgba(255, 120, 0, 0.95)) drop-shadow(0 0 20px rgba(212, 163, 89, 0.75));
@@ -1898,18 +1959,27 @@
     }
 
     @media (max-width: 480px) {
+
       .wls-name-groom,
       .wls-name-bride {
         font-size: 27px;
       }
+
       .wls-name-amp {
         font-size: 22px;
       }
     }
 
     @keyframes wlsShimmer {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     .wls-divider {
@@ -1980,8 +2050,13 @@
     }
 
     @keyframes wlsBarSweep {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(200%); }
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(200%);
+      }
     }
 
     .wls-details {
@@ -6612,40 +6687,44 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
   <!-- End of bodyStart -->
 
   <!-- Auspicious South Indian Heritage Loading Screen -->
-  <div id="weddingLoadingScreen" class="wedding-loading-screen" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading Invitation">
+  <div id="weddingLoadingScreen" class="wedding-loading-screen" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+    aria-valuenow="0" aria-label="Loading Invitation">
     <div class="wls-frame-border" aria-hidden="true"></div>
     <div class="wls-ornament-corner wls-corner-tl" aria-hidden="true"></div>
     <div class="wls-ornament-corner wls-corner-tr" aria-hidden="true"></div>
     <div class="wls-ornament-corner wls-corner-bl" aria-hidden="true"></div>
     <div class="wls-ornament-corner wls-corner-br" aria-hidden="true"></div>
-    
+
     <div class="wls-content">
       <!-- Auspicious Diya / Sacred Lamp with Flickering Warm Flame -->
       <div class="wls-lamp-wrap">
         <svg class="wls-diya-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <radialGradient id="wlsFlameGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#FFF8D6"/>
-              <stop offset="30%" stop-color="#FFC107"/>
-              <stop offset="70%" stop-color="#FF6D00"/>
-              <stop offset="100%" stop-color="#DD2C00"/>
+              <stop offset="0%" stop-color="#FFF8D6" />
+              <stop offset="30%" stop-color="#FFC107" />
+              <stop offset="70%" stop-color="#FF6D00" />
+              <stop offset="100%" stop-color="#DD2C00" />
             </radialGradient>
             <linearGradient id="wlsBrassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#F5D77F"/>
-              <stop offset="45%" stop-color="#D4A359"/>
-              <stop offset="100%" stop-color="#9C7226"/>
+              <stop offset="0%" stop-color="#F5D77F" />
+              <stop offset="45%" stop-color="#D4A359" />
+              <stop offset="100%" stop-color="#9C7226" />
             </linearGradient>
             <filter id="wlsGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2" result="blur"/>
-              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
-          <path d="M19 38 L29 38 L32 43 L16 43 Z" fill="url(#wlsBrassGrad)"/>
-          <path d="M11 27 C11 27 14 36 24 36 C34 36 37 27 37 27 C37 31 33 38 24 38 C15 38 11 31 11 27 Z" fill="url(#wlsBrassGrad)"/>
-          <ellipse cx="24" cy="27" rx="13" ry="3.5" fill="#C5933A"/>
+          <path d="M19 38 L29 38 L32 43 L16 43 Z" fill="url(#wlsBrassGrad)" />
+          <path d="M11 27 C11 27 14 36 24 36 C34 36 37 27 37 27 C37 31 33 38 24 38 C15 38 11 31 11 27 Z"
+            fill="url(#wlsBrassGrad)" />
+          <ellipse cx="24" cy="27" rx="13" ry="3.5" fill="#C5933A" />
           <g class="wls-flame-glow" filter="url(#wlsGlowFilter)">
-            <path d="M24 5 C24 5, 17 15, 17 21 C17 25.5 20.1 29 24 29 C27.9 29 31 25.5 31 21 C31 15 24 5 24 5 Z" fill="url(#wlsFlameGrad)"/>
-            <path d="M24 12 C24 12, 20 18, 20 22 C20 24.5 21.8 27 24 27 C26.2 27 28 24.5 28 22 C28 18 24 12 24 12 Z" fill="#FFFCE6"/>
+            <path d="M24 5 C24 5, 17 15, 17 21 C17 25.5 20.1 29 24 29 C27.9 29 31 25.5 31 21 C31 15 24 5 24 5 Z"
+              fill="url(#wlsFlameGrad)" />
+            <path d="M24 12 C24 12, 20 18, 20 22 C20 24.5 21.8 27 24 27 C26.2 27 28 24.5 28 22 C28 18 24 12 24 12 Z"
+              fill="#FFFCE6" />
           </g>
         </svg>
       </div>
@@ -6715,7 +6794,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
                 <foreignObject width="100%" height="100%" class="framer-fit-text" transform="scale(1)"
                   style="overflow:visible;transform-origin:center center">
                   <p dir="auto"
-                    style="--font-selector:R0Y7Sm9zdC1yZWd1bGFy;--framer-font-family:&quot;Jost&quot;, &quot;Jost Placeholder&quot;, sans-serif;--framer-font-size:32px;--framer-text-color:rgb(255, 235, 186)"
+                    style="--font-selector:R0Y7Sm9zdC1yZWd1bGFy;--framer-font-family:&quot;Jost&quot;, &quot;Jost Placeholder&quot;, sans-serif;--framer-font-size:32px;--framer-text-color:rgb(255, 255, 255)"
                     class="framer-text">WEDS</p>
                 </foreignObject>
               </svg></div>
@@ -6726,7 +6805,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
                 <foreignObject width="100%" height="100%" class="framer-fit-text" transform="scale(0.67)"
                   style="overflow:visible;transform-origin:center center">
                   <p dir="auto"
-                    style="--font-selector:R0Y7Sm9zdC1yZWd1bGFy;--framer-font-family:&quot;Jost&quot;, &quot;Jost Placeholder&quot;, sans-serif;--framer-font-size:32px;--framer-text-color:rgb(255, 235, 186)"
+                    style="--font-selector:R0Y7Sm9zdC1yZWd1bGFy;--framer-font-family:&quot;Jost&quot;, &quot;Jost Placeholder&quot;, sans-serif;--framer-font-size:32px;--framer-text-color:rgb(255, 255, 255)"
                     class="framer-text">WEDS</p>
                 </foreignObject>
               </svg></div>
@@ -6764,7 +6843,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
               <div class="framer-64h8lc" data-framer-name="TAG LINE" data-framer-component-type="RichTextContainer"
                 style="will-change:transform;opacity:1;transform:translate(-50%, -50%)">
                 <p dir="auto"
-                  style="--framer-font-size:18px;--framer-letter-spacing:0.1em;--framer-text-alignment:center;--framer-text-color:rgb(228, 226, 184);--framer-text-transform:uppercase"
+                  style="--framer-font-size:18px;--framer-letter-spacing:0.1em;--framer-text-alignment:center;--framer-text-color:rgb(255, 255, 255);--framer-text-transform:uppercase"
                   class="framer-text"><span style="white-space:nowrap"><span
                       style="display:inline-block;opacity:0.001;filter:blur(10px);transform:translateX(0px) translateY(20px) scale(1) rotate(0deg) skewX(0deg) skewY(0deg)">a</span><span
                       style="display:inline-block;opacity:0.001;filter:blur(10px);transform:translateX(0px) translateY(20px) scale(1) rotate(0deg) skewX(0deg) skewY(0deg)">r</span><span
@@ -6792,7 +6871,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
               <div class="framer-64h8lc" data-framer-name="TAG LINE" data-framer-component-type="RichTextContainer"
                 style="will-change:transform;opacity:1;transform:translate(-50%, -50%)">
                 <p dir="auto"
-                  style="--framer-font-size:5px;--framer-letter-spacing:0.1em;--framer-text-alignment:center;--framer-text-color:rgb(228, 226, 184);--framer-text-transform:uppercase"
+                  style="--framer-font-size:5px;--framer-letter-spacing:0.1em;--framer-text-alignment:center;--framer-text-color:rgb(255, 255, 255);--framer-text-transform:uppercase"
                   class="framer-text"><span style="white-space:nowrap"><span
                       style="display:inline-block;opacity:0.001;filter:blur(10px);transform:translateX(0px) translateY(20px) scale(1) rotate(0deg) skewX(0deg) skewY(0deg)">a</span><span
                       style="display:inline-block;opacity:0.001;filter:blur(10px);transform:translateX(0px) translateY(20px) scale(1) rotate(0deg) skewX(0deg) skewY(0deg)">r</span><span
@@ -6907,9 +6986,9 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
                   Son of<br>
                   <strong class="wis-parents">Kaliyappan &amp; Susheela</strong><br>
                   and Grandson of<br>
-                  <strong class="wis-grandparents">Muthusamy Velaphagounder &amp; Aarukani</strong>
+                  <strong class="wis-grandparents">Muthusamy Velaphagounder &amp; Arukaani</strong>
                 </p>
-                <p class="wis-connector">we cordially</p>
+                
                 <p class="wis-connector">and</p>
                 <p class="wis-lineage wis-bride-lineage">
                   Daughter of<br>
@@ -7035,7 +7114,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
               data-framer-component-type="RichTextContainer" viewBox="0 0 650 260"
               style="will-change:transform;opacity:0;transform:translate(-50%, -50%) translateY(40px)">
               <foreignObject width="100%" height="100%" class="framer-fit-text" transform="scale(1)"
-                style="overflow:visible;transform-origin:center center"><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">With the blessings of the Almighty<br>and our beloved elders,</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">Kaliyappan &amp; Susheela</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">Muthusamy Velaphagounder &amp; Aarukani</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:15px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">and</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Daughter of<br class="framer-text"><strong class="framer-text">Duraisamy &amp; Dhanalakshimi</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">Arunachalam &amp; Papaathi</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">we are cordially invite<br>you to grace the auspicious wedding ceremony of their beloved</p></foreignObject>
+                style="overflow:visible;transform-origin:center center"><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">With the blessings of the Almighty<br>and our beloved elders,</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">Kaliyappan &amp; Susheela</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">Muthusamy Velaphagounder &amp; Arukaani</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:15px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">and</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Daughter of<br class="framer-text"><strong class="framer-text">Duraisamy &amp; Dhanalakshimi</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">Arunachalam &amp; Papaathi</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:16px;--framer-line-height:1.4em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">we are cordially invite<br>you to grace the auspicious wedding ceremony of their beloved</p></foreignObject>
             </svg><svg class="framer-19me4mh hidden-72rtr7 hidden-8l4zif hidden-1lmndnn hidden-ayqnlw"
               data-framer-name="GROOM FAMILY" data-framer-component-type="RichTextContainer" viewBox="0 0 480 61"
               style="display:none !important;will-change:transform;opacity:0;transform:translate(-50%, -50%) translateY(40px)">
@@ -7056,7 +7135,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
               data-framer-name="GROOM FAMILY" data-framer-component-type="RichTextContainer" viewBox="0 0 477 240"
               style="will-change:transform;opacity:0;transform:translate(-50%, -50%) translateY(40px)">
               <foreignObject width="100%" height="100%" class="framer-fit-text" transform="scale(1)"
-                style="overflow:visible;transform-origin:center center"><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">With the blessings of the Almighty<br>and our beloved elders,</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">Kaliyappan &amp; Susheela</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">Muthusamy Velaphagounder &amp; Aarukani</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">and</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Daughter of<br class="framer-text"><strong class="framer-text">Duraisamy &amp; Dhanalakshimi</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">Arunachalam &amp; Papaathi</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">we are cordially invite<br>you to grace the auspicious wedding ceremony of their beloved</p></foreignObject>
+                style="overflow:visible;transform-origin:center center"><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">With the blessings of the Almighty<br>and our beloved elders,</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Son of<br class="framer-text"><strong class="framer-text">Kaliyappan &amp; Susheela</strong><br class="framer-text">and Grandson of<br class="framer-text"><strong class="framer-text">Muthusamy Velaphagounder &amp; Arukaani</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">and</p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:13px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">Daughter of<br class="framer-text"><strong class="framer-text">Duraisamy &amp; Dhanalakshimi</strong><br class="framer-text">and Granddaughter of<br class="framer-text"><strong class="framer-text">Arunachalam &amp; Papaathi</strong></p><p dir="auto" style="--font-selector:R0Y7QWJoYXlhIExpYnJlLXJlZ3VsYXI=;--framer-font-family:&quot;Abhaya Libre&quot;, &quot;Abhaya Libre Placeholder&quot;, serif;--framer-font-size:12.5px;--framer-font-weight:400;--framer-line-height:1.35em;--framer-text-alignment:center;--framer-text-color:rgb(94, 94, 92)" class="framer-text">we are cordially invite<br>you to grace the auspicious wedding ceremony of their beloved</p></foreignObject>
             </svg>
             <div class="ssr-variant hidden-1lmndnn">
               <div class="framer-z74mwu hidden-1fqmtcv" data-framer-name="INVITE"
@@ -7221,8 +7300,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
                         style="position:relative;width:100%;border-radius:20px;overflow:hidden;touch-action:pan-y;background:rgba(255,255,255,0.96);padding:12px;border:2px solid rgb(205, 174, 128);box-shadow:inset 0 0 0 2px rgb(88, 11, 26), 0 8px 24px rgba(0,0,0,0.1)">
                         <div class="wedding-fade"
                           style="aspect-ratio:3 / 4;width:100%;border-radius:14px;overflow:hidden;background:rgb(247, 243, 235)">
-                          <img pixelheight="1448" pixelwidth="1086"
-                            src="./assets/images/heritage/event-engagement.jpg"
+                          <img pixelheight="1448" pixelwidth="1086" src="./assets/images/heritage/event-engagement.jpg"
                             alt="Engagement Ceremony photo" loading="eager" class="wedding-photo"
                             style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;transition:transform 350ms ease">
                         </div>
@@ -7372,8 +7450,7 @@ Click the link below to view our wedding invitation. We can't wait to celebrate 
                         style="position:relative;width:100%;border-radius:20px;overflow:hidden;touch-action:pan-y;background:rgba(255,255,255,0.96);padding:12px;border:2px solid rgb(205, 174, 128);box-shadow:inset 0 0 0 2px rgb(88, 11, 26), 0 8px 24px rgba(0,0,0,0.1)">
                         <div class="wedding-fade"
                           style="aspect-ratio:3 / 4;width:100%;border-radius:14px;overflow:hidden;background:rgb(247, 243, 235)">
-                          <img pixelheight="1448" pixelwidth="1086"
-                            src="./assets/images/heritage/event-engagement.jpg"
+                          <img pixelheight="1448" pixelwidth="1086" src="./assets/images/heritage/event-engagement.jpg"
                             alt="Engagement Ceremony photo" loading="eager" class="wedding-photo"
                             style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;transition:transform 350ms ease">
                         </div>
